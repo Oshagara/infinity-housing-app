@@ -13,6 +13,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/RootStack';
 import { login } from '../services/authService';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -43,18 +44,26 @@ export default function LoginScreen({ navigation }: Props) {
           [
             {
               text: 'Agent',
-              onPress: () => {
-                // Use agent data
-                console.log('Login successful as Agent:', response.agentData);
-                navigation.navigate('AgentHome');
+              onPress: async () => {
+                try {
+                  await AsyncStorage.setItem('user', JSON.stringify(response.agentData));
+                  navigation.replace('AgentHome');
+                } catch (error) {
+                  console.error('Error storing user data:', error);
+                  Alert.alert('Error', 'Failed to store user data');
+                }
               },
             },
             {
               text: 'Tenant',
-              onPress: () => {
-                // Use tenant data
-                console.log('Login successful as Tenant:', response.tenantData);
-                navigation.navigate('TenantHome');
+              onPress: async () => {
+                try {
+                  await AsyncStorage.setItem('user', JSON.stringify(response.tenantData));
+                  navigation.replace('TenantHome');
+                } catch (error) {
+                  console.error('Error storing user data:', error);
+                  Alert.alert('Error', 'Failed to store user data');
+                }
               },
             },
           ]
@@ -63,8 +72,13 @@ export default function LoginScreen({ navigation }: Props) {
         // Single role available, proceed with login
         const role = response.availableRoles[0];
         const data = role === 'agent' ? response.agentData : response.tenantData;
-        console.log(`Login successful as ${role}:`, data);
-        navigation.navigate(role === 'agent' ? 'AgentHome' : 'TenantHome');
+        try {
+          await AsyncStorage.setItem('user', JSON.stringify(data));
+          navigation.replace(role === 'agent' ? 'AgentHome' : 'TenantHome');
+        } catch (error) {
+          console.error('Error storing user data:', error);
+          Alert.alert('Error', 'Failed to store user data');
+        }
       }
     } catch (error) {
       Alert.alert(

@@ -1,5 +1,4 @@
-// API Configuration
-export const API_URL = 'https://api.infinityhousing.com/v1';
+export const API_URL = 'https://infinity-housing.onrender.com';
 
 // Other Constants
 export const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5MB

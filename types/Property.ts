@@ -7,6 +7,10 @@ export type PaymentPlan = 'Outright' | 'Installment' | 'Rent to Own';
 export type Ownership = 'Freehold' | 'Leasehold';
 export type PetPolicy = 'Allowed' | 'Not Allowed' | 'Case by Case';
 export type TargetTenant = 'Family' | 'Single' | 'Couple' | 'Students' | 'Corporate';
+export type StatusType = 'active' | 'pending' | 'inactive';
+export type StatusFilter = 'all' | StatusType;
+export type SortOption = 'price-asc' | 'price-desc' | 'views-desc' | 'inquiries-desc';
+
 
 export interface Coordinates {
   type: 'Point';

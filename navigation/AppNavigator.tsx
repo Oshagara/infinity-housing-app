@@ -9,6 +9,7 @@ import InquiriesScreen from '../screens/InquiriesScreen';
 import { RootStackParamList } from '../types/RootStack';
 import PreviewScreen from '../screens/PreviewScreen';
 import UserTypeScreen from '../screens/UserTypeScreen';
+import AddPropertyScreen from '../screens/AddPropertyScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -18,6 +19,12 @@ export default function AppNavigator() {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
+          animation: 'fade_from_bottom',
+          animationDuration: 50,
+          presentation: 'card',
+          contentStyle: { backgroundColor: '#fff' },
+          gestureEnabled: true,
+          gestureDirection: 'horizontal',
         }}
       >
         <Stack.Screen name="Preview" component={PreviewScreen} />
@@ -27,6 +34,7 @@ export default function AppNavigator() {
         <Stack.Screen name="AgentHome" component={AgentHomeScreen} />
         <Stack.Screen name="MyListings" component={MyListingsScreen} />
         <Stack.Screen name="Inquiries" component={InquiriesScreen} />
+        <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ title: 'Add Property' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

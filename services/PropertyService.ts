@@ -1,146 +1,64 @@
+// services/PropertyService.ts
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Property } from '../types/Property';
-import { API_URL } from '../config/constants';
 
-class PropertyService {
-  private static instance: PropertyService;
-  private baseUrl: string;
+const API_URL = 'https://infinity-housing.onrender.com';
 
-  private constructor() {
-    this.baseUrl = `${API_URL}/properties`;
-  }
+export const fetchAgentListings = async (): Promise<Property[]> => {
+  const user = await AsyncStorage.getItem('user');
+  const token = await AsyncStorage.getItem('token');
+  if (!user || !token) throw new Error('User not authenticated');
 
-  static getInstance(): PropertyService {
-    if (!PropertyService.instance) {
-      PropertyService.instance = new PropertyService();
-    }
-    return PropertyService.instance;
-  }
+  const { id } = JSON.parse(user);
 
-  async addProperty(property: Partial<Property>): Promise<Property> {
-    try {
-      // Create FormData for multipart/form-data
-      const formData = new FormData();
+  const response = await fetch(`${API_URL}/property/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
-      // Add property data as JSON string
-      formData.append('property', JSON.stringify(property));
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to fetch listings');
+  return data as Property[];
+};
 
-      // Add images
-      if (property.images && property.images.length > 0) {
-        property.images.forEach((uri, index) => {
-          const filename = uri.split('/').pop();
-          const match = /\.(\w+)$/.exec(filename || '');
-          const type = match ? `image/${match[1]}` : 'image';
+export const fetchPropertyById = async (id: string): Promise<Property> => {
+  const token = await AsyncStorage.getItem('token');
+  const response = await fetch(`${API_URL}/property/${id}`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
 
-          formData.append('images', {
-            uri,
-            name: filename,
-            type,
-          } as any);
-        });
-      }
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to fetch property');
+  return data as Property;
+};
 
-      // Add videos
-      if (property.videos && property.videos.length > 0) {
-        property.videos.forEach((uri, index) => {
-          const filename = uri.split('/').pop();
-          const match = /\.(\w+)$/.exec(filename || '');
-          const type = match ? `video/${match[1]}` : 'video';
+export const createProperty = async (agentId:String, payload: Partial<Property>) => {
+  const token = await AsyncStorage.getItem('token');
+  const response = await fetch(`${API_URL}/property/${agentId}`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
 
-          formData.append('videos', {
-            uri,
-            name: filename,
-            type,
-          } as any);
-        });
-      }
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to create property');
+  return data;
+};
 
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-        body: formData,
-      });
+export const updateProperty = async (id: string, payload: Partial<Property>) => {
+  const token = await AsyncStorage.getItem('token');
+  const response = await fetch(`${API_URL}/property/${id}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(payload),
+  });
 
-      if (!response.ok) {
-        throw new Error('Failed to add property');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error adding property:', error);
-      throw error;
-    }
-  }
-
-  async updateProperty(id: string, property: Partial<Property>): Promise<Property> {
-    try {
-      const response = await fetch(`${this.baseUrl}/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(property),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update property');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error updating property:', error);
-      throw error;
-    }
-  }
-
-  async deleteProperty(id: string): Promise<void> {
-    try {
-      const response = await fetch(`${this.baseUrl}/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete property');
-      }
-    } catch (error) {
-      console.error('Error deleting property:', error);
-      throw error;
-    }
-  }
-
-  async getProperty(id: string): Promise<Property> {
-    try {
-      const response = await fetch(`${this.baseUrl}/${id}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch property');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching property:', error);
-      throw error;
-    }
-  }
-
-  async getProperties(filters?: any): Promise<Property[]> {
-    try {
-      const queryParams = new URLSearchParams(filters).toString();
-      const url = filters ? `${this.baseUrl}?${queryParams}` : this.baseUrl;
-
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch properties');
-      }
-
-      return await response.json();
-    } catch (error) {
-      console.error('Error fetching properties:', error);
-      throw error;
-    }
-  }
-}
-
-export default PropertyService; 
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.message || 'Failed to update property');
+  return data;
+};

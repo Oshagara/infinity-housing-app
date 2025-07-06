@@ -66,10 +66,18 @@ export default function AgentHomeScreen({ navigation }: Props) {
 
         <TouchableOpacity 
           style={styles.tabItem} 
+          onPress={() => navigation.navigate({ name: 'AddProperty' as any, params: undefined })}
+        >
+          <Ionicons name="add-circle" size={48} color="#666" />
+          <Text style={styles.tabLabel}>Post</Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity 
+          style={styles.tabItem} 
           onPress={() => navigation.navigate('Inquiries')}
         >
           <Ionicons name="chatbubble" size={24} color="#666" />
-          <Text style={styles.tabLabel}>Inquiries</Text>
+          <Text style={styles.tabLabel}>Chat</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.tabItem} 
