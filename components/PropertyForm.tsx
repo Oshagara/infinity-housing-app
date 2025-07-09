@@ -1,7 +1,9 @@
 // components/PropertyForm.tsx
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, ScrollView, GestureResponderEvent } from 'react-native';
+
 import { Property } from '../types/Property';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 interface Props {
   initialData: Partial<Property>;
@@ -23,6 +25,10 @@ export default function PropertyForm({ initialData, onSubmit, isEdit }: Props) {
     }
     onSubmit(formData);
   };
+
+  function pickFile(event: GestureResponderEvent): void {
+    throw new Error('Function not implemented.');
+  }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
@@ -51,7 +57,28 @@ export default function PropertyForm({ initialData, onSubmit, isEdit }: Props) {
         placeholder="e.g. Duplex, Apartment"
       />
 
-      {/* Add more fields as needed... */}
+      <View style={styles.rowContainer}>
+  <TouchableOpacity style={styles.plusButton} onPress={pickFile}>
+    <Icon name="plus" size={12} color="#fff" />
+  </TouchableOpacity>
+
+  <TouchableOpacity style={styles.plusButton} onPress={pickFile}>
+    <Icon name="plus" size={12} color="#fff" />
+  </TouchableOpacity>
+
+  <TouchableOpacity style={styles.plusButton} onPress={pickFile}>
+    <Icon name="plus" size={12} color="#fff" />
+  </TouchableOpacity>
+
+   <TouchableOpacity style={styles.plusButton} onPress={pickFile}>
+    <Icon name="plus" size={12} color="#fff" />
+  </TouchableOpacity>
+
+   <TouchableOpacity style={styles.plusButton} onPress={pickFile}>
+    <Icon name="plus" size={12} color="#fff" />
+  </TouchableOpacity>
+</View>
+
 
       <TouchableOpacity style={styles.button} onPress={handlePress}>
         <Text style={styles.buttonText}>{isEdit ? 'Update Property' : 'Create Property'}</Text>
@@ -74,6 +101,22 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginBottom: 16,
+  },
+  rowContainer: {
+  flexDirection: 'row',
+  justifyContent: 'space-between', // or 'center' or 'flex-start'
+  alignItems: 'center',
+  gap: 10, // RN 0.71+, or use marginRight on buttons instead
+  marginBottom: 20,
+},
+  plusButton: {
+    backgroundColor: '#f6f6f6f6',
+    width: 70,
+    height: 70,
+    borderRadius: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
   },
   button: {
     backgroundColor: '#007AFF',
