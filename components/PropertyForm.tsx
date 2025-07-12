@@ -1,6 +1,6 @@
 // components/PropertyForm.tsx
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TouchableOpacity, ScrollView, GestureResponderEvent } from 'react-native';
+import { View, TextInput, Text, StyleSheet, TouchableOpacity, ScrollView, GestureResponderEvent, Button } from 'react-native';
 
 import { Property } from '../types/Property';
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -55,6 +55,12 @@ export default function PropertyForm({ initialData, onSubmit, isEdit }: Props) {
         value={formData.propertyType || ''}
         onChangeText={(text) => updateField('propertyType', text)}
         placeholder="e.g. Duplex, Apartment"
+      />
+
+      <Button
+        title="Pick File"
+        onPress={pickFile}
+        color="#007AFF"
       />
 
       <View style={styles.rowContainer}>

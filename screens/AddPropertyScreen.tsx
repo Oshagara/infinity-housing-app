@@ -6,6 +6,7 @@ import { RootStackParamList } from '../types/RootStack';
 import { Property } from '../types/Property';
 import { fetchPropertyById, createProperty, updateProperty } from '../services/PropertyService';
 import PropertyForm from '../components/PropertyForm';
+import PropertyForm2 from '../components/PropertyForm2';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddProperty'>;
 
@@ -55,7 +56,7 @@ export default function AddPropertyScreen({ navigation, route }: Props) {
       {loading ? (
         <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 40 }} />
       ) : (
-        <PropertyForm
+        <PropertyForm2
           initialData={propertyData || {}}
           onSubmit={handleSubmit}
           isEdit={isEdit}

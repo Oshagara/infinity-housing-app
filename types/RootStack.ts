@@ -12,4 +12,5 @@ export type RootStackParamList = {
   AddProperty: { listingId?: string; additionalData?: { id: string } }; 
   EditProfile: undefined; // or specify params if any
   ChangePassword: undefined;
+  Notifications: undefined; // Add this line if not present
 }; 

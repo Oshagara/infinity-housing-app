@@ -6,5 +6,6 @@ export type RootStackParamList = {
   Home: undefined;
   AddProperty: { listingId?: string; additionalData?: { id: string } };
   EditProfile: undefined; // or specify params if any
+  notifications: undefined; // Add this line if not present
   // ... other screens
 }; 
