@@ -206,6 +206,12 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
   return (
     <PaperProvider theme={theme}>
       <ScrollView style={styles.container} contentContainerStyle={styles.listContent}>
+         {/* Filter Button */}
+        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', backgroundColor:'#fffff', marginBottom: 12 }}>
+          <Button mode="outlined" icon="filter-variant" onPress={() => setFilterVisible(true)}>
+            Filters
+          </Button>
+        </View>
         {/* Near You Section */}
         {userLocation && nearYouProperties.length > 0 && (
           <View style={{ marginBottom: 32 }}>
@@ -221,12 +227,6 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
             />
           </View>
         )}
-        {/* Filter Button */}
-        <View style={{ flexDirection: 'row', justifyContent: 'flex-end', backgroundColor:'#fffff', marginBottom: 12 }}>
-          <Button mode="outlined" icon="filter-variant" onPress={() => setFilterVisible(true)}>
-            Filters
-          </Button>
-        </View>
         {/* Filter Modal */}
         <Portal>
           <Dialog visible={filterVisible} onDismiss={() => setFilterVisible(false)} style={{ backgroundColor: '#fff' }}>
@@ -347,6 +347,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: '#f7f8fa',
     paddingVertical: 50,
+    marginBottom: 40,
     paddingHorizontal: 16,
     
   },

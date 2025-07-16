@@ -164,8 +164,8 @@ const handleLogin = async () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.title}>Welcome Back!</Text>
-        <Text style={styles.subtitle}>Login to continue</Text>
+        <Text style={styles.title}>Welcome back!</Text>
+        <Text style={styles.subtitle}>Kindly login to access our premium/reliable property Listings</Text>
 
         <TextInput
           style={styles.input}

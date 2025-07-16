@@ -3,10 +3,28 @@ import { View, StyleSheet } from 'react-native';
 import { Text, Button, IconButton } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/RootStack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TenantHome'>;
 
 const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
+  const [name, setName] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const userJson = await AsyncStorage.getItem('agent_info');
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          setName(user.name || 'Tenant');
+        }
+      } catch (e) {
+        setName('Tenant');
+      }
+    })();
+  }, []);
+
   const handleLogout = () => {
     // TODO: Implement logout logic (clear tokens, navigate to login, etc.)
     navigation.replace('Login');
@@ -22,11 +40,11 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
           accessibilityLabel="Logout"
         />
       </View>
-      <Text style={styles.title}>Welcome, Tenant!</Text>
+      <Text style={styles.title}>Hi, {name}!</Text>
       <Text style={styles.subtitle}>Browse, rent, or buy your dream home.</Text>
       <Button
         mode="contained"
-        style={styles.button}
+        style={[styles.button, { backgroundColor: '#007AFF' }]}
         onPress={() => navigation.navigate('Home')}
       >
         View Properties
@@ -34,6 +52,7 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
       <Button
         mode="outlined"
         style={styles.button}
+        labelStyle={{ color: '#007AFF', fontWeight: 'bold' }}
         onPress={() => navigation.navigate('Inquiries')}
       >
         My Inquiries
@@ -60,7 +79,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 12,
-    color: '#007AFF',
+    color: '#4a4a4aff',
   },
   subtitle: {
     fontSize: 16,
