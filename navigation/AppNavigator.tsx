@@ -10,6 +10,9 @@ import { RootStackParamList } from '../types/RootStack';
 import PreviewScreen from '../screens/PreviewScreen';
 import UserTypeScreen from '../screens/UserTypeScreen';
 import AddPropertyScreen from '../screens/AddPropertyScreen';
+import TenantHomeScreen from '../screens/TenantHomeScreen';
+import HomeScreen from '../screens/HomeScreen';
+import PropertyDetails from '../screens/PropertyDetailsScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -32,9 +35,14 @@ export default function AppNavigator() {
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
         <Stack.Screen name="AgentHome" component={AgentHomeScreen} />
+        <Stack.Screen name="TenantHome" component={TenantHomeScreen} />
+        <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="MyListings" component={MyListingsScreen} />
         <Stack.Screen name="Inquiries" component={InquiriesScreen} />
         <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ title: 'Add Property' }} />
+        <Stack.Screen name="PropertyDetails" component={PropertyDetails} />
+
+
       </Stack.Navigator>
     </NavigationContainer>
   );
