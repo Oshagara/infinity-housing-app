@@ -1,6 +1,5 @@
 // React Native Full Property Listing Form + File Upload + Dropdowns + Grouping
 // Dependencies: formik, yup, react-native-paper, axios, react-native-document-picker
-
 import React from 'react';
 import { ScrollView, View, StyleSheet, Alert, Image } from 'react-native';
 import { TextInput, Button, Text, Switch, HelperText, Divider, List, Menu } from 'react-native-paper';
@@ -11,6 +10,9 @@ import * as Yup from 'yup';
 import axios from 'axios';
 import { TextInputLabelProp } from 'react-native-paper/lib/typescript/components/TextInput/types';
 import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
+import { Dropdown } from "react-native-paper-dropdown";
+ import * as FileSystem from 'expo-file-system';
+ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const theme = {
   ...DefaultTheme,
@@ -39,13 +41,24 @@ const validationSchema = Yup.object().shape({
 
 const dropdownOptions = {
   listingType: ['For Sale', 'For Rent'],
-  propertyType: ['Duplex', 'Bungalow', 'Apartment', 'Land'],
+  propertyType: ['Duplex', 'Bungalow', 'Flat', 'Self-Contain', 'Terraced', 'Mansion'],
   currency: ['NGN', 'USD', 'EUR'],
   areaUnit: ['sqm', 'sqft'],
   plotSizeUnit: ['sqm', 'sqft'],
-  furnishing: ['Furnished', 'Unfurnished', 'Partially Furnished'],
+  furnishing: ['Fully Furnished', 'Semi-Furnished', 'Unfurnished'],
   flooring: ['Tiles', 'Wood', 'Marble', 'Concrete'],
   paymentPlan: ['Outright', 'Installments', 'Mortgage'],
+  availability: ['Available Now', 'Available Soon', 'Not Available'],
+  ownership: ['Freehold', 'Leasehold', 'Joint Ownership'],
+  petPolicy: ['Allowed', 'Not Allowed'],
+  percentage: ['0%', '5%', '10%', '15%', '20%'],
+  targetTenant: ['Family', 'Single', 'Students', 'Professionals'],
+  proximityToRoad: ['Very Close', 'Close', 'Moderate', 'Far'],
+  bedroom: ['1', '2', '3', '4', '5+'],
+  bathroom: ['1', '2', '3', '4', '5+'],
+  toilet: ['1', '2', '3', '4', '5+'],
+  yearBuilt: ['2020', '2019', '2018', '2017', '2016', '2015', '2014', '2013', '2012', '2011', '2010'],
+  floors: ['1', '2', '3', '4', '5+'],
 };
 
 const PropertyForm2: React.FC<PropertyForm2Props> = ({ initialData, onSubmit, isEdit }) => {
@@ -84,23 +97,23 @@ const PropertyForm2: React.FC<PropertyForm2Props> = ({ initialData, onSubmit, is
     petPolicy: '',
     targetTenant: '',
     proximityToRoad: '',
-    files: [],
+    images: [],
   };
 
-  const pickFiles = async (setFieldValue: any, currentFiles: any[]) => {
+  const pickFiles = async (setFieldValue: any, currentImages: any[]) => {
     try {
       const res = await DocumentPicker.getDocumentAsync({ type: '*/*', multiple: true });
       if (!res.canceled) {
         // Combine new files with existing ones
-        setFieldValue('files', [...currentFiles, ...res.assets]);
+        setFieldValue('images', [...currentImages, ...res.assets]);
       }
     } catch (err) {
       Alert.alert('Error', 'File selection failed');
     }
   };
 
-  const handleSubmit = async (values: any, { setSubmitting }: any) => {
-    if (!values.files || values.files.length === 0) {
+  /**const handleSubmit = async (values: any, { setSubmitting }: any) => {
+    if (!values.files || values.files.length === 0 ) {
       Alert.alert('Missing Files', 'Please select at least one file.');
       setSubmitting(false);
       return;
@@ -112,22 +125,147 @@ const PropertyForm2: React.FC<PropertyForm2Props> = ({ initialData, onSubmit, is
       formData.append('files[]', {
         uri: file.uri,
         name: file.name,
-        type: file.mimeType,
+        type: file.mimeType || 'image/jpeg'
       } as any);
     });
 
     try {
-      const response = await axios.post('https://infinity-housing.onrender.com/property', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const response = await axios.post(
+        'https://infinity-housing.onrender.com/property',
+        formData
+      );
       Alert.alert('Success', 'Property submitted successfully.');
     } catch (error) {
-      console.error(error);
-      Alert.alert('Error', 'Submission failed.');
+      const err = error as { message?: string };
+      console.log('Axios error:', JSON.stringify(err, null, 2));
+      Alert.alert('Error', err.message || 'Submission failed.');
     } finally {
       setSubmitting(false);
     }
+  };**/
+
+
+const handleSubmit = async (values: any, { setSubmitting }: any) => {
+  if (!values.images || values.images.length === 0) {
+    Alert.alert('Missing Images', 'Please select at least one image.');
+    setSubmitting(false);
+    return;
+  }
+
+  const token = await AsyncStorage.getItem('access_token');
+  const agentJson = await AsyncStorage.getItem('agent_info');
+  const agent = agentJson ? JSON.parse(agentJson) : null;
+
+  if (!token || !agent) {
+    Alert.alert('Auth Error', 'You are not logged in or agent info missing.');
+    setSubmitting(false);
+    return;
+  }
+
+  // ✅ Build payload including listedBy
+  const payload = {
+    listingType: values.listingType,
+    propertyType: values.propertyType,
+    price: parseFloat(values.price),
+    currency: values.currency,
+    isNegotiable: values.isNegotiable,
+    address: {
+      street: values.street,
+      area: values.area,
+      city: values.city,
+      state: values.state,
+      lga: values.lga,
+      country: values.country,
+      coordinates: {
+        type: 'Point',
+        coordinates: [parseFloat(values.longitude), parseFloat(values.latitude)],
+      },
+    },
+    bedrooms: parseInt(values.bedrooms),
+    bathrooms: parseInt(values.bathrooms),
+    toilets: parseInt(values.toilets),
+    area: {
+      value: parseFloat(values.areaValue),
+      unit: values.areaUnit,
+    },
+    plotSize: {
+      value: parseFloat(values.plotSizeValue),
+      unit: values.plotSizeUnit,
+    },
+    yearBuilt: parseInt(values.yearBuilt),
+    floors: parseInt(values.floors),
+    furnishing: values.furnishing,
+    flooring: [values.flooring],
+    availability: values.availability,
+    listedBy: {
+      name: agent.name,
+      phone: agent.phone || 'N/A',
+      role: 'agent',
+      agency: agent.agency || 'N/A',
+    },
+    images: values.images.map((file: any) => ({
+      uri: file.uri,
+      name: file.name || 'upload.jpg',
+      type: file.mimeType || 'image/jpeg',
+    })),
+    videos: [],
+    floorPlan: '',
+    features: {
+      interior: [],
+      exterior: [],
+      security: [],
+      amenities: [],
+    },
+    locationAdvantages: [],
+    financialDetails: {
+      maintenanceFee: parseFloat(values.maintenanceFee),
+      agencyFee: values.agencyFee,
+      paymentPlan: [values.paymentPlan],
+    },
+    legalStatus: {
+      ownership: values.ownership,
+      cOfO: values.cOfO,
+      governorConsent: values.governorConsent,
+    },
+    additionalInfo: {
+      petPolicy: values.petPolicy,
+      targetTenant: values.targetTenant,
+      proximityToRoad: values.proximityToRoad,
+    },
   };
+
+  const formData = new FormData();
+  formData.append('payload', JSON.stringify(payload));
+  values.images.forEach((file: any) => {
+    formData.append('images[]', {
+      uri: file.uri,
+      name: file.name || 'upload.jpg',
+      type: file.mimeType || 'image/jpeg',
+    } as any);
+  });
+
+  try {
+    const response = await axios.post(
+      'https://infinity-housing.onrender.com/property',
+      formData,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'multipart/form-data',
+        },
+      }
+    );
+
+    Alert.alert('Success', 'Property submitted successfully.');
+    console.log('✅ Upload response:', response.data);
+  } catch (error: any) {
+    console.log('❌ Axios error:', error.message);
+    Alert.alert('Error', error.message || 'Submission failed.');
+  } finally {
+    setSubmitting(false);
+  }
+};
+
 
   const renderDropdown = (label: TextInputLabelProp | undefined, value: string | undefined, setFieldValue: (arg0: any, arg1: any) => void, options: any[]) => (
     <Menu
@@ -161,14 +299,37 @@ const PropertyForm2: React.FC<PropertyForm2Props> = ({ initialData, onSubmit, is
           {({ handleChange, handleBlur, handleSubmit, values, errors, touched, setFieldValue, isSubmitting }) => (
             <View>
               <List.Accordion title="Basic Info" left={props => <List.Icon {...props} icon="information" />}>
-                <TextInput label="Listing Type" value={values.listingType} onChangeText={handleChange('listingType')} mode="outlined" style={styles.input} />
-                <TextInput label="Property Type" value={values.propertyType} onChangeText={handleChange('propertyType')} mode="outlined" style={styles.input} />
+                <Dropdown
+                  label="Listing Type"
+                  mode="outlined"
+                  value={values.listingType}
+                  onSelect={(v?: string) => setFieldValue('listingType', v)}
+                  options={dropdownOptions.listingType.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.listingType && errors.listingType)}>{errors.listingType}</HelperText>
+                <Dropdown
+                  label="Property Type"
+                  mode="outlined"
+                  value={values.propertyType}
+                  onSelect={(v?: string) => setFieldValue('propertyType', v)}
+                  options={dropdownOptions.propertyType.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.propertyType && errors.propertyType)}>{errors.propertyType}</HelperText>
                 <TextInput label="Price" value={values.price} onChangeText={handleChange('price')} keyboardType="numeric" mode="outlined" style={styles.input} />
-                <TextInput label="Currency" value={values.currency} onChangeText={handleChange('currency')} mode="outlined" style={styles.input} />
+                <HelperText type="error" visible={!!(touched.price && errors.price)}>{errors.price}</HelperText>
+                <Dropdown
+                  label="Currency"
+                  mode="outlined"
+                  value={values.currency}
+                  onSelect={(v?: string) => setFieldValue('currency', v)}
+                  options={dropdownOptions.currency.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.currency && errors.currency)}>{errors.currency}</HelperText>
                 <View style={styles.switchRow}>
                   <Text>Is Negotiable</Text>
                   <Switch value={values.isNegotiable} onValueChange={val => { void setFieldValue('isNegotiable', val); }} />
                 </View>
+                <HelperText type="error" visible={!!(touched.isNegotiable && errors.isNegotiable)}>{errors.isNegotiable}</HelperText>
               </List.Accordion>
 
               <List.Accordion title="Address Info" left={props => <List.Icon {...props} icon="map-marker" />}>
@@ -185,84 +346,189 @@ const PropertyForm2: React.FC<PropertyForm2Props> = ({ initialData, onSubmit, is
               </List.Accordion>
 
               <List.Accordion title="Property Details" left={props => <List.Icon {...props} icon="home" />}>
-                {["bedrooms", "bathrooms", "toilets", "areaValue", "plotSizeValue", "yearBuilt", "floors"].map(field => (
-                  <TextInput
-                    key={field}
-                    label={field}
-                    value={
-                      typeof values[field as keyof typeof values] === 'string'
-                        ? (values[field as keyof typeof values] as string)
-                        : values[field as keyof typeof values] === null || values[field as keyof typeof values] === undefined
-                          ? undefined
-                          : String(values[field as keyof typeof values])
-                    }
-                    onChangeText={handleChange(field)}
-                    mode="outlined"
-                    style={styles.input}
-                  />
-                ))}
-                <TextInput label="Furnishing" value={values.furnishing} onChangeText={handleChange('furnishing')} mode="outlined" style={styles.input} />
-                <TextInput label="Flooring" value={values.flooring} onChangeText={handleChange('flooring')} mode="outlined" style={styles.input} />
-                <TextInput label="Availability" value={values.availability} onChangeText={handleChange('availability')} mode="outlined" style={styles.input} />
+                <Dropdown
+                  label="bedrooms"
+                  mode="outlined"
+                  value={values.bedrooms}
+                  onSelect={(v?: string) => setFieldValue('bedrooms', v)}
+                  options={dropdownOptions.bedroom.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.bedrooms && errors.bedrooms)}>{errors.bedrooms}</HelperText>
+                <Dropdown
+                  label="bathrooms"
+                  mode="outlined"
+                  value={values.bathrooms}
+                  onSelect={(v?: string) => setFieldValue('bathrooms', v)}
+                  options={dropdownOptions.bathroom.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.bathrooms && errors.bathrooms)}>{errors.bathrooms}</HelperText>
+                <Dropdown
+                  label="toilets"
+                  mode="outlined"
+                  value={values.toilets}
+                  onSelect={(v?: string) => setFieldValue('toilets', v)}
+                  options={dropdownOptions.toilet.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.toilets && errors.toilets)}>{errors.toilets}</HelperText>
+                <TextInput
+                  label="areaValue"
+                  value={typeof values["areaValue"] === 'string' ? values["areaValue"] : values["areaValue"] === null || values["areaValue"] === undefined ? '' : String(values["areaValue"])}
+                  onChangeText={handleChange('areaValue')}
+                  keyboardType="numeric"
+                  mode="outlined"
+                  style={styles.input}
+                />
+                <HelperText type="error" visible={!!(touched.areaValue && errors.areaValue)}>{errors.areaValue}</HelperText>
+                <Dropdown
+                  label="Area Unit"
+                  mode="outlined"
+                  value={values.areaUnit}
+                  onSelect={(v?: string) => setFieldValue('areaUnit', v)}
+                  options={dropdownOptions.areaUnit.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.areaUnit && errors.areaUnit)}>{errors.areaUnit}</HelperText>
+                <TextInput
+                  label="plotSizeValue"
+                  value={typeof values["plotSizeValue"] === 'string' ? values["plotSizeValue"] : values["plotSizeValue"] === null || values["plotSizeValue"] === undefined ? '' : String(values["plotSizeValue"])}
+                  onChangeText={handleChange('plotSizeValue')}
+                  keyboardType="numeric"
+                  mode="outlined"
+                  style={styles.input}
+                />
+                <HelperText type="error" visible={!!(touched.plotSizeValue && errors.plotSizeValue)}>{errors.plotSizeValue}</HelperText>
+                <Dropdown
+                  label="Plot Size Unit"
+                  mode="outlined"
+                  value={values.plotSizeUnit}
+                  onSelect={(v?: string) => setFieldValue('plotSizeUnit', v)}
+                  options={dropdownOptions.plotSizeUnit.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.plotSizeUnit && errors.plotSizeUnit)}>{errors.plotSizeUnit}</HelperText>
+                <Dropdown
+                  label="yearBuilt"
+                  mode="outlined"
+                  value={values.yearBuilt}
+                  onSelect={(v?: string) => setFieldValue('yearBuilt', v)}
+                  options={dropdownOptions.yearBuilt.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.yearBuilt && errors.yearBuilt)}>{errors.yearBuilt}</HelperText>
+                <Dropdown
+                  label="floors"
+                  mode="outlined"
+                  value={values.floors}
+                  onSelect={(v?: string) => setFieldValue('floors', v)}
+                  options={dropdownOptions.floors.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.floors && errors.floors)}>{errors.floors}</HelperText>
+                <Dropdown
+                  label="Furnishing"
+                  mode="outlined"
+                  value={values.furnishing}
+                  onSelect={(v?: string) => setFieldValue('furnishing', v)}
+                  options={dropdownOptions.furnishing.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.furnishing && errors.furnishing)}>{errors.furnishing}</HelperText>
+                <Dropdown
+                  label="Flooring"
+                  mode="outlined"
+                  value={values.flooring}
+                  onSelect={(v?: string) => setFieldValue('flooring', v)}
+                  options={dropdownOptions.flooring.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.flooring && errors.flooring)}>{errors.flooring}</HelperText>
+                <Dropdown
+                  label="availability"
+                  mode="outlined"
+                  value={values.availability}
+                  onSelect={(v?: string) => setFieldValue('availability', v)}
+                  options={dropdownOptions.availability.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.availability && errors.availability)}>{errors.availability}</HelperText>
               </List.Accordion>
 
               <List.Accordion title="Financial & Legal" left={props => <List.Icon {...props} icon="currency-ngn" />}>
-                {["maintenanceFee", "agencyFee", "paymentPlan", "ownership"].map(field => (
-                  <TextInput
-                    key={field}
-                    label={field}
-                    value={
-                      typeof values[field as keyof typeof values] === 'string'
-                        ? (values[field as keyof typeof values] as string)
-                        : values[field as keyof typeof values] === null || values[field as keyof typeof values] === undefined
-                          ? undefined
-                          : String(values[field as keyof typeof values])
-                    }
-                    onChangeText={handleChange(field)}
-                    mode="outlined"
-                    style={styles.input}
-                  />
-                ))}
+                <Dropdown
+                  label="maintenanceFee"
+                  mode="outlined"
+                  value={values.maintenanceFee}
+                  onSelect={(v?: string) => setFieldValue('maintenanceFee', v)}
+                  options={dropdownOptions.percentage.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.maintenanceFee && errors.maintenanceFee)}>{errors.maintenanceFee}</HelperText>
+                <Dropdown
+                  label="agencyFee"
+                  mode="outlined"
+                  value={values.agencyFee}
+                  onSelect={(v?: string) => setFieldValue('agencyFee', v)}
+                  options={dropdownOptions.percentage.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.agencyFee && errors.agencyFee)}>{errors.agencyFee}</HelperText>
+                <Dropdown
+                  label="Payment Plan"
+                  mode="outlined"
+                  value={values.paymentPlan}
+                  onSelect={(v?: string) => setFieldValue('paymentPlan', v)}
+                  options={dropdownOptions.paymentPlan.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.paymentPlan && errors.paymentPlan)}>{errors.paymentPlan}</HelperText>
+                <Dropdown
+                  label="ownership"
+                  mode="outlined"
+                  value={values.ownership}
+                  onSelect={(v?: string) => setFieldValue('ownership', v)}
+                  options={dropdownOptions.ownership.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.ownership && errors.ownership)}>{errors.ownership}</HelperText>
                 <View style={styles.switchRow}>
                   <Text>Certificate of Occupancy</Text>
                   <Switch value={values.cOfO} onValueChange={val => { void setFieldValue('cOfO', val); }} />
                 </View>
+                <HelperText type="error" visible={!!(touched.cOfO && errors.cOfO)}>{errors.cOfO}</HelperText>
                 <View style={styles.switchRow}>
                   <Text>Governor Consent</Text>
                   <Switch value={values.governorConsent} onValueChange={val => { void setFieldValue('governorConsent', val); }} />
                 </View>
+                <HelperText type="error" visible={!!(touched.governorConsent && errors.governorConsent)}>{errors.governorConsent}</HelperText>
               </List.Accordion>
 
               <List.Accordion title="Additional Info" left={props => <List.Icon {...props} icon="dots-horizontal" />}>
-                {["petPolicy", "targetTenant", "proximityToRoad"].map(field => (
-                  <TextInput
-                    key={field}
-                    label={field}
-                    value={
-                      typeof values[field as keyof typeof values] === 'string'
-                        ? (values[field as keyof typeof values] as string)
-                        : values[field as keyof typeof values] === null || values[field as keyof typeof values] === undefined
-                          ? undefined
-                          : String(values[field as keyof typeof values])
-                    }
-                    onChangeText={handleChange(field)}
-                    mode="outlined"
-                    style={styles.input}
-                  />
-                ))}
+                <Dropdown
+                  label="petPolicy"
+                  mode="outlined"
+                  value={values.petPolicy}
+                  onSelect={(v?: string) => setFieldValue('petPolicy', v)}
+                  options={dropdownOptions.petPolicy.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.petPolicy && errors.petPolicy)}>{errors.petPolicy}</HelperText>
+                <Dropdown
+                  label="targetTenant"
+                  mode="outlined"
+                  value={values.targetTenant}
+                  onSelect={(v?: string) => setFieldValue('targetTenant', v)}
+                  options={dropdownOptions.targetTenant.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.targetTenant && errors.targetTenant)}>{errors.targetTenant}</HelperText>
+                <Dropdown
+                  label="proximityToRoad"
+                  mode="outlined"
+                  value={values.proximityToRoad}
+                  onSelect={(v?: string) => setFieldValue('proximityToRoad', v)}
+                  options={dropdownOptions.proximityToRoad.map(opt => ({ label: opt, value: opt }))}
+                />
+                <HelperText type="error" visible={!!(touched.proximityToRoad && errors.proximityToRoad)}>{errors.proximityToRoad}</HelperText>
               </List.Accordion>
 
               <Button
                 icon="plus"
                 mode="contained"
-                onPress={() => pickFiles(setFieldValue, values.files)}
+                onPress={() => pickFiles(setFieldValue, values.images)}
                 style={styles.button}
               >
-                {values.files && values.files.length > 0 ? 'Files Selected' : 'Pick Files'}
+                {values.images && values.images.length > 0 ? 'Files Selected' : 'Pick Files'}
               </Button>
 
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginVertical: 10 }}>
-                {values.files && values.files.map((file: any, idx: number) => (
+                {values.images && values.images.map((file: any, idx: number) => (
                   <View key={idx} style={{ position: 'relative', marginRight: 8, marginBottom: 8 }}>
                     {file.mimeType && file.mimeType.startsWith('image/') ? (
                       <Image
@@ -280,8 +546,8 @@ const PropertyForm2: React.FC<PropertyForm2Props> = ({ initialData, onSubmit, is
                       style={{ position: 'absolute', backgroundColor: '', top: -10, right: -10, minWidth: 24, minHeight: 24, paddingRight: 5, zIndex: 1 }}
                       labelStyle={{ fontSize: 20, color: 'red' }}
                       onPress={() => {
-                        const newFiles = values.files.filter((_: any, i: number) => i !== idx);
-                        setFieldValue('files', newFiles);
+                        const newImages = values.images.filter((_: any, i: number) => i !== idx);
+                        setFieldValue('images', newImages);
                       }}
                     >
                       ×
