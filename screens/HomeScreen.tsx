@@ -126,12 +126,19 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
   const renderProperty = ({ item }: { item: any }) => {
     const coverUrl = getCoverImage(item.images);
-    console.log('HOME COVER IMAGE:', coverUrl, 'RAW IMAGES:', item.images, 'ITEM:', item);
     return (
-      <Card style={styles.card} elevation={3}>
-        {item.images && item.images.length > 0 ? (
-          <Card.Cover source={{ uri: coverUrl }} style={styles.cardImage} />
-        ) : null}
+      <Card style={styles.card} elevation={0}>
+        <View style={{ position: 'relative' }}>
+          {item.images && item.images.length > 0 ? (
+            <Card.Cover source={{ uri: coverUrl }} style={styles.cardImage} />
+          ) : null}
+          {/* Listing Type Tag on Image */}
+          <View style={styles.listingTypeTagContainer}>
+            <Text style={[styles.listingTypeTag, item.listingType === 'For Rent' ? styles.rentTag : styles.saleTag]}>
+              {item.listingType}
+            </Text>
+          </View>
+        </View>
         <Card.Content>
           <Text style={styles.title}>{item.title || item.propertyType}</Text>
           <Text style={styles.price}>{item.currency || 'NGN'} {item.price?.toLocaleString?.() || item.price}</Text>
@@ -339,8 +346,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f7f8fa',
-    paddingTop: 40,
-    paddingBottom: 12,
+    paddingVertical: 50,
     paddingHorizontal: 16,
     
   },
@@ -362,7 +368,7 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 14,
   },
   title: {
-    fontSize: 14,
+    fontSize: 12,
     fontWeight: 'bold',
     marginTop: 6,
     color: '#222',
@@ -401,9 +407,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
   },
   sectionHeader: {
-    fontSize: 20,
+    fontSize: 14,
     fontWeight: 'bold',
-    color: '#222',
+    color: '#282e34ff',
     marginBottom: 2,
     marginLeft: 2,
     marginTop: 8,
@@ -430,6 +436,29 @@ const styles = StyleSheet.create({
     lineHeight: 10,
     color: '#007AFF',
     fontWeight: '600',
+  },
+  listingTypeTagContainer: {
+    position: 'absolute',
+    top: 2,
+    left: 0,
+    zIndex: 2,
+  },
+  listingTypeTag: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 0,
+    overflow: 'hidden',
+    color: '#fff',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  rentTag: {
+    backgroundColor: '#007AFF',
+  },
+  saleTag: {
+    backgroundColor: '#34C759',
   },
 });
 
