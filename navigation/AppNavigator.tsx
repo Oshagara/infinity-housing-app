@@ -13,6 +13,11 @@ import AddPropertyScreen from '../screens/AddPropertyScreen';
 import TenantHomeScreen from '../screens/TenantHomeScreen';
 import HomeScreen from '../screens/HomeScreen';
 import PropertyDetails from '../screens/PropertyDetailsScreen';
+import EditProfileScreen from '../screens/EditProfileScreen';
+import ProfileScreen from '../screens/ProfileScreen';
+import SavedItemsScreen from '../screens/SavedItemsScreen';
+import ChatbotScreen from '../screens/ChatbotScreen';
+import ChangePasswordScreen from '../screens/ChangePasswordScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -41,6 +46,12 @@ export default function AppNavigator() {
         <Stack.Screen name="Inquiries" component={InquiriesScreen} />
         <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ title: 'Add Property' }} />
         <Stack.Screen name="PropertyDetails" component={PropertyDetails} />
+        <Stack.Screen name="EditProfile" component={EditProfileScreen} options={{ title: 'Edit Profile' }} />
+        <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
+        <Stack.Screen name="SavedItems" component={SavedItemsScreen} options={{ title: 'Saved Items' }} />
+        <Stack.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'Chat Assistant' }} />
+        <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change Password' }} />
+        
 
 
       </Stack.Navigator>

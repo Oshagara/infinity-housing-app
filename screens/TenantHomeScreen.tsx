@@ -1,15 +1,20 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, Button, IconButton } from 'react-native-paper';
+import { Text, Button, IconButton, Card, Avatar, FAB } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/RootStack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
+import axios from 'axios';
+import { FlatList, Image, TouchableOpacity } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'TenantHome'>;
 
 const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
   const [name, setName] = useState('');
+  const [profilePicture, setProfilePicture] = useState('');
+  const [newestProperties, setNewestProperties] = useState<any[]>([]);
 
   useEffect(() => {
     (async () => {
@@ -18,9 +23,25 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
         if (userJson) {
           const user = JSON.parse(userJson);
           setName(user.name || 'Tenant');
+          setProfilePicture(user.profilePicture || user.avatar || '');
         }
       } catch (e) {
         setName('Tenant');
+        setProfilePicture('');
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await axios.get('https://infinity-housing.onrender.com/property');
+        const sorted = res.data
+          .filter((p: any) => !!p.createdAt)
+          .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setNewestProperties(sorted.slice(0, 5));
+      } catch (e) {
+        setNewestProperties([]);
       }
     })();
   }, []);
@@ -30,8 +51,82 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
     navigation.replace('Login');
   };
 
+  const makeAbsoluteUrl = (url: string) =>
+    url && url.startsWith('http')
+      ? url
+      : url
+      ? `https://infinity-housing.onrender.com${url.startsWith('/') ? url : '/' + url}`
+      : '';
+
+  const getCoverImage = (images: any[]) => {
+    if (!Array.isArray(images)) return '';
+    const first = images[0];
+    if (typeof first === 'string') {
+      return makeAbsoluteUrl(first);
+    }
+    if (first?.url) {
+      return makeAbsoluteUrl(first.url);
+    }
+    return '';
+  };
+
+  const renderPropertyCard = ({ item }: { item: any }) => {
+    const coverUrl = getCoverImage(item.images);
+    return (
+      <Card style={styles.card} elevation={0}>
+        <View style={{ position: 'relative' }}>
+          {item.images && item.images.length > 0 ? (
+            <Card.Cover source={{ uri: coverUrl }} style={styles.cardImage} />
+          ) : null}
+          {/* Listing Type Tag on Image */}
+          <View style={styles.listingTypeTagContainer}>
+            <Text style={[styles.listingTypeTag, item.listingType === 'For Rent' ? styles.rentTag : styles.saleTag]}>
+              {item.listingType}
+            </Text>
+          </View>
+        </View>
+        <Card.Content>
+          <Text style={styles.title}>{item.title || item.propertyType}</Text>
+          <Text style={styles.price}>{item.currency || 'NGN'} {item.price?.toLocaleString?.() || item.price}</Text>
+          <View style={styles.addressContainer}>
+            <Ionicons name="location-outline" size={10} color="#666" style={styles.locationIcon} />
+            <Text style={styles.address}>{item.address?.street || item.address || item.location || ''}</Text>
+          </View>
+          <View style={styles.detailsRow}>
+            <Text style={styles.detail}>{item.bedrooms} Bed</Text>
+            <Text style={styles.separator}>•</Text>
+            <Text style={styles.detail}>{item.bathrooms} Bath</Text>
+            <Text style={styles.separator}>•</Text>
+            <Text style={styles.detail}>{item.area?.value || item.area} {item.area?.unit || item.areaUnit || ''}</Text>
+          </View>
+          <Text style={styles.furnishing}>{item.furnishing}</Text>
+        </Card.Content>
+        <Card.Actions>
+          <Button style={styles.cardButton} compact labelStyle={styles.cardButtonText} onPress={() => navigation.navigate('PropertyDetails', { propertyId: item._id || item.id })}>
+            View Details
+          </Button>
+        </Card.Actions>
+      </Card>
+    );
+  };
+
   return (
     <View style={styles.container}>
+      {/* Profile Header */}
+      <View style={styles.profileHeader}>
+        <TouchableOpacity 
+          style={styles.profileSection}
+          onPress={() => navigation.navigate('Profile')}
+        >
+          <Avatar.Image 
+            size={40} 
+            source={profilePicture ? { uri: profilePicture } : require('../assets/images/house1.jpg')}
+            style={styles.profileImage}
+          />
+          <Text style={styles.profileName}>Hi, {name}</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.logoutButtonContainer}>
         <IconButton
           icon="logout"
@@ -40,23 +135,46 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
           accessibilityLabel="Logout"
         />
       </View>
-      <Text style={styles.title}>Hi, {name}!</Text>
-      <Text style={styles.subtitle}>Browse, rent, or buy your dream home.</Text>
-      <Button
-        mode="contained"
-        style={[styles.button, { backgroundColor: '#007AFF' }]}
-        onPress={() => navigation.navigate('Home')}
-      >
-        View Properties
-      </Button>
-      <Button
-        mode="outlined"
-        style={styles.button}
-        labelStyle={{ color: '#007AFF', fontWeight: 'bold' }}
-        onPress={() => navigation.navigate('Inquiries')}
-      >
-        My Inquiries
-      </Button>
+      {/* Newest Properties Section at the top */}
+      {newestProperties.length > 0 && (
+        <View style={styles.newestSection}>
+          <Text style={styles.newestTitle}>Newest Properties</Text>
+          <FlatList
+            data={newestProperties}
+            keyExtractor={item => item._id || item.id}
+            renderItem={renderPropertyCard}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ gap: 12, paddingLeft: 2, paddingRight: 2, alignItems: 'center' }}
+            style={{ marginTop: 4, marginBottom: 0 }}
+          />
+        </View>
+      )}
+      <View style={styles.centerContent}>
+        <Text style={[styles.subtitle, {fontSize: 12}]}>Browse, rent, or buy your dream home.</Text>
+        <Button
+          mode="contained"
+          style={[styles.button, { backgroundColor: '#007AFF' }]}
+          onPress={() => navigation.navigate('Home')}
+        >
+          View Properties
+        </Button>
+        <Button
+          mode="outlined"
+          style={[styles.button, styles.lastButton]}
+          labelStyle={{ color: '#007AFF', fontWeight: 'bold' }}
+          onPress={() => navigation.navigate('SavedItems')}
+        >
+          View Saved Items
+        </Button>
+      </View>
+
+      {/* Floating Action Button for Chatbot */}
+      <FAB
+        icon="chat"
+        style={styles.fab}
+        onPress={() => navigation.navigate('Chatbot')}
+      />
     </View>
   );
 };
@@ -64,10 +182,30 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 24,
+    backgroundColor: '#f3f3f3ff',
+    paddingHorizontal: 24,
+    paddingTop: 24,
+  },
+  profileHeader: {
+    position: 'absolute',
+    top: 40,
+    left: 20,
+    zIndex: 10,
+  },
+  profileSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  profileImage: {
+    backgroundColor: '#e0e0e0',
+  },
+  profileName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#222',
+    maxWidth: 120,
   },
   logoutButtonContainer: {
     position: 'absolute',
@@ -76,20 +214,206 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 12,
-    color: '#4a4a4aff',
+    marginTop: 6,
+    color: '#222',
+    marginBottom: 2,
+    textAlign: 'center',
+    alignSelf: 'center',
+    width: '100%',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 32,
     textAlign: 'center',
+    alignSelf: 'center',
+    width: '100%',
   },
   button: {
-    marginTop: 16,
-    minWidth: 200,
+    alignSelf: 'center',
+    width: 180,
+    marginTop: 12,
+    marginBottom: 0,
+  },
+  lastButton: {
+    marginTop: 12,
+    marginBottom: 16,
+  },
+  fab: {
+    position: 'absolute',
+    margin: 24,
+    right: 0,
+    bottom: 0,
+  },
+  propertyCard: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    paddingVertical: 8,
+    paddingHorizontal: 6,
+    width: 160,
+    minHeight: 200,
+    maxWidth: 160,
+    marginRight: 8,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  propertyImage: {
+    width: 120,
+    height: 70,
+    borderRadius: 8,
+    marginBottom: 6,
+    backgroundColor: '#eee',
+  },
+  propertyTitle: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#222',
+    marginBottom: 2,
+    textAlign: 'center',
+  },
+  propertyPrice: {
+    fontSize: 11,
+    color: '#007AFF',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  propertyButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    minWidth: 0,
+    height: 22,
+    justifyContent: 'center',
+    alignSelf: 'center',
+    marginTop: 2,
+  },
+  propertyButtonText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 13,
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+  },
+  card: {
+    marginBottom: 12,
+    borderRadius: 14,
+    overflow: 'hidden',
+    width: 160,
+    minHeight: 200,
+    maxWidth: 160,
+    backgroundColor: '#fff',
+  },
+  cardImage: {
+    height: 70,
+    borderTopLeftRadius: 14,
+    borderTopRightRadius: 14,
+  },
+  price: {
+    fontSize: 13,
+    color: '#007AFF',
+    fontWeight: '600',
+    marginVertical: 2,
+  },
+  address: {
+    fontSize: 11,
+    color: '#666',
+    marginBottom: 4,
+  },
+  addressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  locationIcon: {
+    marginRight: 4,
+  },
+  detailsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginBottom: 2,
+  },
+  detail: {
+    fontSize: 10,
+    color: '#444',
+    marginRight: 6,
+  },
+  separator: {
+    fontSize: 10,
+    color: '#ccc',
+    marginHorizontal: 2,
+  },
+  furnishing: {
+    fontSize: 10,
+    color: '#888',
+    marginBottom: 2,
+  },
+  cardButton: {
+    marginTop: 2,
+    alignSelf: 'center',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    minWidth: 0,
+    height: 22,
+    justifyContent: 'center',
+    borderRadius: 8,
+    backgroundColor: '#eaf4ff',
+    borderWidth: 1,
+    borderColor: '#007AFF',
+  },
+  cardButtonText: {
+    fontSize: 11,
+    textAlign: 'center',
+    paddingVertical: 0,
+    paddingHorizontal: 0,
+    lineHeight: 13,
+    color: '#007AFF',
+    fontWeight: '600',
+  },
+  listingTypeTagContainer: {
+    position: 'absolute',
+    top: 2,
+    left: 0,
+    zIndex: 2,
+  },
+  listingTypeTag: {
+    fontSize: 8,
+    fontWeight: 'bold',
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    borderRadius: 0,
+    overflow: 'hidden',
+    color: '#fff',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  rentTag: {
+    backgroundColor: '#007AFF',
+  },
+  saleTag: {
+    backgroundColor: '#34C759',
+  },
+  newestSection: {
+    marginTop: 100,
+    marginBottom: 4,
+    alignItems: 'center',
+    width: '100%',
+  },
+  newestTitle: {
+    fontWeight: 'bold',
+    fontSize: 15,
+    marginBottom: 8,
+    color: '#222',
+    width: '100%',
+  },
+  centerContent: {
+    alignItems: 'center',
+    width: '100%',
   },
 });
 

@@ -16,5 +16,6 @@ export type RootStackParamList = {
   errorBoundary: undefined; // Add this line for error boundary
   Home: undefined; // Add this line for home screen if needed
   Filter: undefined; // Add this line for filter screen if needed
+  
 
 }; 

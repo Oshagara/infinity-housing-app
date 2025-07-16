@@ -7,6 +7,7 @@ import { RootStackParamList } from '../types/RootStack';
 import axios from 'axios';
 import * as Location from 'expo-location';
 import { getDistance } from 'geolib';
+import { Ionicons } from '@expo/vector-icons';
 
 // Remove mockProperties
 
@@ -142,10 +143,15 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
         <Card.Content>
           <Text style={styles.title}>{item.title || item.propertyType}</Text>
           <Text style={styles.price}>{item.currency || 'NGN'} {item.price?.toLocaleString?.() || item.price}</Text>
-          <Text style={styles.address}>{item.address?.street || item.address || item.location || ''}</Text>
+          <View style={styles.addressContainer}>
+            <Ionicons name="location-outline" size={10} color="#666" style={styles.locationIcon} />
+            <Text style={styles.address}>{item.address?.street || item.address || item.location || ''}</Text>
+          </View>
           <View style={styles.detailsRow}>
             <Text style={styles.detail}>{item.bedrooms} Bed</Text>
+            <Text style={styles.separator}>•</Text>
             <Text style={styles.detail}>{item.bathrooms} Bath</Text>
+            <Text style={styles.separator}>•</Text>
             <Text style={styles.detail}>{item.area?.value || item.area} {item.area?.unit || item.areaUnit || ''}</Text>
           </View>
           <Text style={styles.furnishing}>{item.furnishing}</Text>
@@ -180,7 +186,7 @@ const HomeScreen: React.FC<Props> = ({ navigation }) => {
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <View style={[styles.loadingContainer]}>
         <ActivityIndicator size="large" />
       </View>
     );
@@ -386,6 +392,14 @@ const styles = StyleSheet.create({
     color: '#666',
     marginBottom: 4,
   },
+  addressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  locationIcon: {
+    marginRight: 4,
+  },
   detailsRow: {
     flexDirection: 'row',
     gap: 6,
@@ -395,6 +409,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#444',
     marginRight: 6,
+  },
+  separator: {
+    fontSize: 10,
+    color: '#ccc',
+    marginHorizontal: 2,
   },
   furnishing: {
     fontSize: 10,

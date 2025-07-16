@@ -18,7 +18,8 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#ffffff",
+        "color": "#007AFF"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.oshagara.infinityhousing"
