@@ -11,16 +11,16 @@ import {
   Animated,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/RootStack';
+import { RootStackParamList } from '../../types/RootStack';
 
 const { width, height } = Dimensions.get('window');
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Preview'>;
 
 const images = [
-  require('../assets/images/house1.jpg'),
-  require('../assets/images/house2.jpg'),
-  require('../assets/images/house3.jpg'),
+  require('../../assets/images/house1.jpg'),
+  require('../../assets/images/house2.jpg'),
+  require('../../assets/images/house3.jpg'),
 ];
 
 export default function PreviewScreen({ navigation }: Props) {

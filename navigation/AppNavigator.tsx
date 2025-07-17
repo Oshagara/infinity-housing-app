@@ -1,23 +1,25 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
-import RegisterScreen from '../screens/RegisterScreen';
-import LoginScreen from '../screens/LoginScreen';
-import AgentHomeScreen from '../screens/AgentHomeScreen';
-import MyListingsScreen from '../screens/MyListingsScreen';
-import InquiriesScreen from '../screens/InquiriesScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
+import AgentHomeScreen from '../screens/agent/AgentHomeScreen';
+import MyListingsScreen from '../screens/agent/MyListingsScreen';
+import InquiriesScreen from '../screens/shared/InquiriesScreen';
 import { RootStackParamList } from '../types/RootStack';
-import PreviewScreen from '../screens/PreviewScreen';
-import UserTypeScreen from '../screens/UserTypeScreen';
-import AddPropertyScreen from '../screens/AddPropertyScreen';
-import TenantHomeScreen from '../screens/TenantHomeScreen';
-import HomeScreen from '../screens/HomeScreen';
-import PropertyDetails from '../screens/PropertyDetailsScreen';
-import EditProfileScreen from '../screens/EditProfileScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import SavedItemsScreen from '../screens/SavedItemsScreen';
-import ChatbotScreen from '../screens/ChatbotScreen';
-import ChangePasswordScreen from '../screens/ChangePasswordScreen';
+import PreviewScreen from '../screens/auth/PreviewScreen';
+import UserTypeScreen from '../screens/auth/UserTypeScreen';
+import AddPropertyScreen from '../screens/agent/AddPropertyScreen';
+import TenantHomeScreen from '../screens/tenant/TenantHomeScreen';
+import HomeScreen from '../screens/tenant/HomeScreen';
+import PropertyDetails from '../screens/shared/PropertyDetailsScreen';
+import EditProfileScreen from '../screens/shared/EditProfileScreen';
+import ProfileScreen from '../screens/shared/ProfileScreen';
+import SavedItemsScreen from '../screens/tenant/SavedItemsScreen';
+import ChatbotScreen from '../screens/tenant/ChatbotScreen';
+import ChangePasswordScreen from '../screens/shared/ChangePasswordScreen';
+import NotificationsScreen from '../screens/shared/NotificationsScreen';
+import SearchScreen from '../screens/shared/SearchScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -51,9 +53,8 @@ export default function AppNavigator() {
         <Stack.Screen name="SavedItems" component={SavedItemsScreen} options={{ title: 'Saved Items' }} />
         <Stack.Screen name="Chatbot" component={ChatbotScreen} options={{ title: 'Chat Assistant' }} />
         <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change Password' }} />
-        
-
-
+        <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
+        <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Search' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, TextInput, Alert, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { Text, Button, Avatar, IconButton, List, Switch, Divider } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/RootStack';
+import { RootStackParamList } from '../../types/RootStack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { updateProfile } from '../services/authService';
+import { updateProfile } from '../../services/authService';
+import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -177,10 +178,18 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Profile</Text>
+        <View style={{ width: 24 }} />
+      </View>
+      
       <View style={styles.profileHeader}>
         <Avatar.Image
           size={80}
-          source={user.profilePicture ? { uri: user.profilePicture } : require('../assets/images/house1.jpg')}
+          source={user.profilePicture ? { uri: user.profilePicture } : require('../../assets/images/house1.jpg')}
           style={styles.avatar}
         />
         
@@ -332,7 +341,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           <Divider style={styles.divider} />
 
           {/* Account Actions */}
-          <Text style={styles.settingsTitle}>Account</Text>
+          {/* <Text style={styles.settingsTitle}>Account</Text> */}
           
           <List.Section style={styles.settingsList}>
             <List.Item
@@ -361,8 +370,20 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#fff',
-    paddingTop: 60,
     paddingHorizontal: 24,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 0,
+  },
+  headerTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
   },
   profileHeader: {
     alignItems: 'center',
@@ -452,7 +473,7 @@ const styles = StyleSheet.create({
     color: '#FF3B30',
   },
   divider: {
-    marginVertical: 20,
+    marginVertical: 10,
     backgroundColor: '#E0E0E0',
   },
   centered: {

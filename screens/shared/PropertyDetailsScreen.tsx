@@ -13,7 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/RootStack';
+import { RootStackParamList } from '../../types/RootStack';
 import axios from 'axios';
 import { MaterialCommunityIcons, Ionicons, FontAwesome5 } from '@expo/vector-icons';
 
@@ -119,6 +119,8 @@ export default function PropertyDetailsScreen({ navigation, route }: Props) {
     return url ? makeAbsoluteUrl(url) : '';
   }).filter(Boolean) || [];
 
+  console.log('PROPERTY DATA:', property);
+
   console.log('DETAILS IMAGES:', images);
 
   return (
@@ -143,6 +145,15 @@ export default function PropertyDetailsScreen({ navigation, route }: Props) {
               <Text>No Image</Text>
             </View>
           )}
+          
+          {/* Back Button */}
+          <TouchableOpacity 
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          
           <View style={styles.imageDots}>
             {images.map((_: any, index: React.Key | null | undefined) => (
               <TouchableOpacity
@@ -202,6 +213,17 @@ export default function PropertyDetailsScreen({ navigation, route }: Props) {
             <View style={styles.cardRow}><Text style={styles.cardLabel}>Flooring:</Text><Text style={styles.cardValue}>{Array.isArray(property.flooring) ? property.flooring.join(', ') : property.flooring}</Text></View>
             <View style={styles.cardRow}><Text style={styles.cardLabel}>Availability:</Text><Text style={styles.cardValue}>{property.availability}</Text></View>
             <View style={styles.cardRow}><Text style={styles.cardLabel}>Is Negotiable:</Text><Text style={styles.cardValue}>{property.isNegotiable ? 'Yes' : 'No'}</Text></View>
+          </View>
+
+          {/* Posted By Information */}
+          <View style={styles.cardSection}>
+            <Text style={styles.sectionTitle}>Posted By</Text>
+            <View style={styles.postedByInfo}>
+              <View style={styles.postedByRow}>
+                <Text style={styles.postedByLabel}>Agent ID:</Text>
+                <Text style={styles.postedByValue}>{property.agentId || property.agent?.id || 'Not specified'}</Text>
+              </View>
+            </View>
           </View>
 
           <View style={styles.cardSection}>
@@ -391,7 +413,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   amenityItem: {
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#fefefeff',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -432,6 +454,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  backButton: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    borderRadius: 24,
+    padding: 8,
+    zIndex: 10,
+  },
   fabSave: {
     position: 'absolute',
     top: 20,
@@ -462,15 +493,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   cardSection: {
-    backgroundColor: '#f8f9fa',
     borderRadius: 14,
     padding: 16,
     marginBottom: 18,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 1,
+    borderBottomColor: '#f0f0f0ff',
+    borderBottomWidth: 2,
   },
   cardRow: {
     flexDirection: 'row',
@@ -484,6 +511,27 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   cardValue: {
+    color: '#222',
+    fontWeight: '600',
+    fontSize: 14,
+    flex: 1,
+    textAlign: 'right',
+  },
+  postedByInfo: {
+    marginTop: 8,
+  },
+  postedByRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  postedByLabel: {
+    color: '#888',
+    fontWeight: '500',
+    fontSize: 14,
+    flex: 1,
+  },
+  postedByValue: {
     color: '#222',
     fontWeight: '600',
     fontSize: 14,

@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import { Text, TextInput, IconButton, Card, Button, Chip } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/RootStack';
+import { RootStackParamList } from '../../types/RootStack';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chatbot'>;

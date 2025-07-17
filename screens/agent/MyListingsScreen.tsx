@@ -4,9 +4,9 @@ import {
   View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/RootStack';
-import { Property } from '../types/Property';
-import { fetchAgentListings } from '../services/PropertyService';
+import { RootStackParamList } from '../../types/RootStack';
+import { Property } from '../../types/Property';
+import { fetchAgentListings } from '../../services/PropertyService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'MyListings'>;

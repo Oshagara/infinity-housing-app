@@ -1,8 +1,8 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Modal } from 'react-native';
 import { Text, Button, IconButton, Card, Avatar, FAB } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/RootStack';
+import { RootStackParamList } from '../../types/RootStack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
@@ -15,6 +15,8 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
   const [name, setName] = useState('');
   const [profilePicture, setProfilePicture] = useState('');
   const [newestProperties, setNewestProperties] = useState<any[]>([]);
+  const [previewModalVisible, setPreviewModalVisible] = useState(false);
+  const [selectedProperty, setSelectedProperty] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -73,10 +75,25 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
   const renderPropertyCard = ({ item }: { item: any }) => {
     const coverUrl = getCoverImage(item.images);
     return (
-      <Card style={styles.card} elevation={0}>
+      <TouchableOpacity 
+        style={styles.card} 
+        onPress={() => navigation.navigate('PropertyDetails', { propertyId: item._id || item.id })}
+        onLongPress={() => {
+          setSelectedProperty(item);
+          setPreviewModalVisible(true);
+        }}
+        onPressOut={() => {
+          if (previewModalVisible) {
+            setPreviewModalVisible(false);
+            setSelectedProperty(null);
+          }
+        }}
+        activeOpacity={0.7}
+        delayLongPress={500}
+      >
         <View style={{ position: 'relative' }}>
           {item.images && item.images.length > 0 ? (
-            <Card.Cover source={{ uri: coverUrl }} style={styles.cardImage} />
+            <Image source={{ uri: coverUrl }} style={styles.cardImage} />
           ) : null}
           {/* Listing Type Tag on Image */}
           <View style={styles.listingTypeTagContainer}>
@@ -85,7 +102,7 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
             </Text>
           </View>
         </View>
-        <Card.Content>
+        <View style={styles.cardContent}>
           <Text style={styles.title}>{item.title || item.propertyType}</Text>
           <Text style={styles.price}>{item.currency || 'NGN'} {item.price?.toLocaleString?.() || item.price}</Text>
           <View style={styles.addressContainer}>
@@ -100,34 +117,27 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.detail}>{item.area?.value || item.area} {item.area?.unit || item.areaUnit || ''}</Text>
           </View>
           <Text style={styles.furnishing}>{item.furnishing}</Text>
-        </Card.Content>
-        <Card.Actions>
-          <Button style={styles.cardButton} compact labelStyle={styles.cardButtonText} onPress={() => navigation.navigate('PropertyDetails', { propertyId: item._id || item.id })}>
-            View Details
-          </Button>
-        </Card.Actions>
-      </Card>
+        </View>
+      </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* Profile Header */}
-      <View style={styles.profileHeader}>
+      {/* Header with Profile and Logout */}
+      <View style={styles.header}>
         <TouchableOpacity 
           style={styles.profileSection}
           onPress={() => navigation.navigate('Profile')}
         >
           <Avatar.Image 
             size={40} 
-            source={profilePicture ? { uri: profilePicture } : require('../assets/images/house1.jpg')}
+            source={profilePicture ? { uri: profilePicture } : require('../../assets/images/house1.jpg')}
             style={styles.profileImage}
           />
           <Text style={styles.profileName}>Hi, {name}</Text>
         </TouchableOpacity>
-      </View>
 
-      <View style={styles.logoutButtonContainer}>
         <IconButton
           icon="logout"
           size={24}
@@ -171,10 +181,89 @@ const TenantHomeScreen: React.FC<Props> = ({ navigation }) => {
 
       {/* Floating Action Button for Chatbot */}
       <FAB
-        icon="chat"
-        style={styles.fab}
+        icon="chat-outline"
+        label="Chat Assistant"
+        style={[styles.fab, { backgroundColor: '#ffffffff' }]}
         onPress={() => navigation.navigate('Chatbot')}
       />
+
+      {/* Property Preview Modal */}
+      <Modal
+        visible={previewModalVisible}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setPreviewModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.previewModal}>
+            {selectedProperty && (
+              <>
+                <View style={styles.previewHeader}>
+                  <Text style={styles.previewTitle}>Quick Preview</Text>
+                  <TouchableOpacity onPress={() => setPreviewModalVisible(false)}>
+                    <Ionicons name="close" size={24} color="#333" />
+                  </TouchableOpacity>
+                </View>
+                
+                <View style={styles.previewImageContainer}>
+                  {selectedProperty.images && selectedProperty.images.length > 0 ? (
+                    <Image 
+                      source={{ uri: getCoverImage(selectedProperty.images) }} 
+                      style={styles.previewImage} 
+                    />
+                  ) : (
+                    <View style={[styles.previewImage, { backgroundColor: '#eee', justifyContent: 'center', alignItems: 'center' }]}>
+                      <Text>No Image</Text>
+                    </View>
+                  )}
+                  <View style={styles.previewListingTag}>
+                    <Text style={[styles.previewListingTagText, selectedProperty.listingType === 'For Rent' ? styles.rentTag : styles.saleTag]}>
+                      {selectedProperty.listingType}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.previewContent}>
+                  <Text style={styles.previewPropertyTitle}>{selectedProperty.title || selectedProperty.propertyType}</Text>
+                  <Text style={styles.previewPrice}>{selectedProperty.currency || 'NGN'} {selectedProperty.price?.toLocaleString?.() || selectedProperty.price}</Text>
+                  
+                  <View style={styles.previewAddressContainer}>
+                    <Ionicons name="location-outline" size={12} color="#666" />
+                    <Text style={styles.previewAddress}>{selectedProperty.address?.street || selectedProperty.address || selectedProperty.location || ''}</Text>
+                  </View>
+
+                  <View style={styles.previewDetailsRow}>
+                    <Text style={styles.previewDetail}>{selectedProperty.bedrooms} Bed</Text>
+                    <Text style={styles.previewSeparator}>•</Text>
+                    <Text style={styles.previewDetail}>{selectedProperty.bathrooms} Bath</Text>
+                    <Text style={styles.previewSeparator}>•</Text>
+                    <Text style={styles.previewDetail}>{selectedProperty.area?.value || selectedProperty.area} {selectedProperty.area?.unit || selectedProperty.areaUnit || ''}</Text>
+                  </View>
+
+                  {selectedProperty.description && (
+                    <Text style={styles.previewDescription} numberOfLines={3}>
+                      {selectedProperty.description}
+                    </Text>
+                  )}
+
+                  <View style={styles.previewActions}>
+                    <Button
+                      mode="contained"
+                      style={styles.previewViewButton}
+                      onPress={() => {
+                        setPreviewModalVisible(false);
+                        navigation.navigate('PropertyDetails', { propertyId: selectedProperty._id || selectedProperty.id });
+                      }}
+                    >
+                      View Full Details
+                    </Button>
+                  </View>
+                </View>
+              </>
+            )}
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -183,15 +272,19 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     alignItems: 'center',
-    backgroundColor: '#f3f3f3ff',
+    backgroundColor: '#fdfdfdff',
     paddingHorizontal: 24,
     paddingTop: 24,
   },
-  profileHeader: {
+  header: {
     position: 'absolute',
     top: 40,
     left: 20,
+    right: 20,
     zIndex: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   profileSection: {
     flexDirection: 'row',
@@ -207,20 +300,13 @@ const styles = StyleSheet.create({
     color: '#222',
     maxWidth: 120,
   },
-  logoutButtonContainer: {
-    position: 'absolute',
-    top: 40,
-    right: 20,
-    zIndex: 10,
-  },
+
   title: {
-    fontSize: 24,
+    fontSize: 14,
     fontWeight: 'bold',
     marginTop: 6,
     color: '#222',
     marginBottom: 2,
-    textAlign: 'center',
-    alignSelf: 'center',
     width: '100%',
   },
   subtitle: {
@@ -242,7 +328,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     margin: 24,
     right: 0,
-    bottom: 0,
+    bottom: 40,
   },
   propertyCard: {
     backgroundColor: '#fff',
@@ -308,6 +394,14 @@ const styles = StyleSheet.create({
     minHeight: 200,
     maxWidth: 160,
     backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  cardContent: {
+    padding: 12,
   },
   cardImage: {
     height: 70,
@@ -353,28 +447,7 @@ const styles = StyleSheet.create({
     color: '#888',
     marginBottom: 2,
   },
-  cardButton: {
-    marginTop: 2,
-    alignSelf: 'center',
-    paddingVertical: 0,
-    paddingHorizontal: 0,
-    minWidth: 0,
-    height: 22,
-    justifyContent: 'center',
-    borderRadius: 8,
-    backgroundColor: '#eaf4ff',
-    borderWidth: 1,
-    borderColor: '#007AFF',
-  },
-  cardButtonText: {
-    fontSize: 11,
-    textAlign: 'center',
-    paddingVertical: 0,
-    paddingHorizontal: 0,
-    lineHeight: 13,
-    color: '#007AFF',
-    fontWeight: '600',
-  },
+
   listingTypeTagContainer: {
     position: 'absolute',
     top: 2,
@@ -414,6 +487,107 @@ const styles = StyleSheet.create({
   centerContent: {
     alignItems: 'center',
     width: '100%',
+  },
+  // Preview Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewModal: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    width: '90%',
+    maxHeight: '80%',
+    overflow: 'hidden',
+  },
+  previewHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  previewTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  previewImageContainer: {
+    position: 'relative',
+  },
+  previewImage: {
+    width: '100%',
+    height: 200,
+  },
+  previewListingTag: {
+    position: 'absolute',
+    top: 12,
+    left: 12,
+  },
+  previewListingTagText: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    color: '#fff',
+    textTransform: 'uppercase',
+  },
+  previewContent: {
+    padding: 16,
+  },
+  previewPropertyTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 4,
+  },
+  previewPrice: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#007AFF',
+    marginBottom: 8,
+  },
+  previewAddressContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  previewAddress: {
+    fontSize: 14,
+    color: '#666',
+    marginLeft: 4,
+  },
+  previewDetailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  previewDetail: {
+    fontSize: 13,
+    color: '#444',
+  },
+  previewSeparator: {
+    fontSize: 13,
+    color: '#ccc',
+    marginHorizontal: 6,
+  },
+  previewDescription: {
+    fontSize: 14,
+    color: '#666',
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  previewActions: {
+    alignItems: 'center',
+  },
+  previewViewButton: {
+    backgroundColor: '#007AFF',
+    borderRadius: 8,
+    paddingHorizontal: 24,
   },
 });
 

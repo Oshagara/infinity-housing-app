@@ -2,11 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, SafeAreaView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/RootStack';
-import { Property } from '../types/Property';
-import { fetchPropertyById, createProperty, updateProperty } from '../services/PropertyService';
-import PropertyForm from '../components/PropertyForm';
-import PropertyForm2 from '../components/PropertyForm2';
+import { RootStackParamList } from '../../types/RootStack';
+import { Property } from '../../types/Property';
+import { fetchPropertyById, createProperty, updateProperty } from '../../services/PropertyService';
+import PropertyForm from '../../components/PropertyForm';
+import PropertyForm2 from '../../components/PropertyForm2';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddProperty'>;
 

@@ -13,8 +13,8 @@ import {
   Linking,
 } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../types/RootStack';
-import { register } from '../services/authService';
+import { RootStackParamList } from '../../types/RootStack';
+import { register } from '../../services/authService';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Register'>;
 

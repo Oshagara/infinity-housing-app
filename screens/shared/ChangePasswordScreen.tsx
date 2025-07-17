@@ -13,7 +13,7 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../types/RootStack';
 import { Ionicons } from '@expo/vector-icons';
-import { changePassword } from '../services/authService';
+import { changePassword } from '../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChangePassword'>;
