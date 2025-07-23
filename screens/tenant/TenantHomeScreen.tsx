@@ -388,7 +388,7 @@ const styles = StyleSheet.create({
   },
   card: {
     marginBottom: 12,
-    borderRadius: 14,
+    borderRadius: 1,
     overflow: 'hidden',
     width: 160,
     minHeight: 200,
@@ -396,9 +396,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOpacity: 0.01,
+    shadowRadius: 1,
+
   },
   cardContent: {
     padding: 12,

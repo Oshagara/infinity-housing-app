@@ -1,9 +1,21 @@
 import React from 'react';
+import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import AppNavigator from './navigation/AppNavigator';
 import ErrorBoundary from './components/errorBoundary';
-import { PaperProvider } from 'react-native-paper';
 import { useEffect, useRef } from 'react';
 import { BackHandler, ToastAndroid, Platform } from 'react-native';
+
+const theme = {
+  ...DefaultTheme,
+  colors: {
+    ...DefaultTheme.colors,
+    primary: '#007AFF',
+    accent: '#34C759',
+    background: '#fdfdfd',
+    surface: '#fff',
+    text: '#222',
+  },
+};
 
 export default function App() {
   const backPressCount = useRef(0);
@@ -30,10 +42,10 @@ export default function App() {
   }, []);
 
   return (
+    <PaperProvider theme={theme}>
       <ErrorBoundary>
-        <PaperProvider>
-          <AppNavigator />
-        </PaperProvider>
+        <AppNavigator />
       </ErrorBoundary>
+    </PaperProvider>
   );
 }
