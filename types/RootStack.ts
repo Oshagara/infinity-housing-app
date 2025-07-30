@@ -1,6 +1,6 @@
 export type RootStackParamList = {
   Login: undefined;
-  Register: { userType: 'tenant' | 'agent' };
+  Register: { userType: 'tenant' | 'landlord' };
   UserType: undefined;
   AgentHome: undefined;
   TenantHome: undefined;
@@ -19,5 +19,6 @@ export type RootStackParamList = {
   errorBoundary: undefined; // Add this line for error boundary
   Home: undefined; // Add this line for home screen if needed
   Filter: undefined; // Add this line for filter screen if needed
+  VerifyEmail: { email: string };
 
 }; 

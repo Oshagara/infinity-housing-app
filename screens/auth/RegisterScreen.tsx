@@ -12,6 +12,7 @@ import {
   Alert,
   Linking,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/RootStack';
 import { register } from '../../services/authService';
@@ -160,48 +161,40 @@ export default function RegisterScreen({ route, navigation }: Props) {
   };
 
   const handleContinue = async () => {
-    const currentField = steps[currentStep].field;
-    if (!validateField(currentField, formData[currentField])) {
-      return;
-    }
+  const currentField = steps[currentStep].field;
 
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      try {
-        setIsLoading(true);
-        await register({
-          name: formData.name,
-          email: formData.email,
-          phone: formData.phone,
-          password: formData.password,
-          role: userType,
-        });
-        
-        Alert.alert(
-          'Registration Successful!',
-          'Please check your email for verification link to complete your registration.',
-          [
-            {
-              text: 'Open Email',
-              onPress: openEmailApp,
-            },
-            {
-              text: 'Go to Login',
-              onPress: () => navigation.navigate('Login'),
-            },
-          ]
-        );
-      } catch (error) {
-        Alert.alert(
-          'Registration Failed',
-          error instanceof Error ? error.message : 'Please try again later'
-        );
-      } finally {
-        setIsLoading(false);
-      }
+  if (!validateField(currentField, formData[currentField])) {
+    return;
+  }
+
+  if (currentStep < steps.length - 1) {
+    setCurrentStep(currentStep + 1);
+  } else {
+    try {
+      setIsLoading(true);
+
+      const sanitizedEmail = formData.email.trim().toLowerCase();
+
+      await register({
+        name: formData.name,
+        email: sanitizedEmail,
+        phone: formData.phone,
+        password: formData.password,
+        role: userType,
+      });
+
+      await AsyncStorage.setItem('email', sanitizedEmail);
+
+      navigation.navigate('VerifyEmail', { email: sanitizedEmail});
+
+    } catch (error: any) {
+      const message = error?.response?.data?.message || error?.message || 'Please try again later';
+      Alert.alert('Registration Failed', message);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }
+};
 
   const currentField = steps[currentStep];
 
@@ -251,6 +244,12 @@ export default function RegisterScreen({ route, navigation }: Props) {
               {currentStep === steps.length - 1 ? 'Complete Registration' : 'Continue'}
             </Text>
           )}
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.skipButton}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.skipButton}>skip Home</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -302,6 +301,12 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 24,
+  },
+  skipButton: {
+    marginTop: 20,
+    alignSelf: 'center',
+    color: '#007AFF',
+    fontSize: 16,
   },
   button: {
     backgroundColor: '#007AFF',

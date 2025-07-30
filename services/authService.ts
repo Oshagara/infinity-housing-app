@@ -5,7 +5,7 @@ export const register = async (userData: {
   email: string;
   phone: string;
   password: string;
-  role: 'tenant' | 'agent';
+  role: 'tenant' | 'landlord';
 }) => {
   try {
     const response = await fetch(`${API_URL}/auth/register`, {

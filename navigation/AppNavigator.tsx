@@ -20,6 +20,7 @@ import ChatbotScreen from '../screens/tenant/ChatbotScreen';
 import ChangePasswordScreen from '../screens/shared/ChangePasswordScreen';
 import NotificationsScreen from '../screens/shared/NotificationsScreen';
 import SearchScreen from '../screens/shared/SearchScreen';
+import VerifyEmailScreen from '../screens/auth/VerifyEmailScreen';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -55,6 +56,7 @@ export default function AppNavigator() {
         <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} options={{ title: 'Change Password' }} />
         <Stack.Screen name="Notifications" component={NotificationsScreen} options={{ title: 'Notifications' }} />
         <Stack.Screen name="Search" component={SearchScreen} options={{ title: 'Search' }} />
+        <Stack.Screen name="VerifyEmail" component={VerifyEmailScreen} options={{ title: 'Verify Email' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

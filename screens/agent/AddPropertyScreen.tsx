@@ -7,6 +7,8 @@ import { Property } from '../../types/Property';
 import { fetchPropertyById, createProperty, updateProperty } from '../../services/PropertyService';
 import PropertyForm from '../../components/PropertyForm';
 import PropertyForm2 from '../../components/PropertyForm2';
+import { Ionicons } from '@expo/vector-icons';
+import { TouchableOpacity } from 'react-native';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AddProperty'>;
 
@@ -53,6 +55,9 @@ export default function AddPropertyScreen({ navigation, route }: Props) {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
+       <TouchableOpacity onPress={() => navigation.goBack()}>
+            <Ionicons name="arrow-back" size={24} color="#333" />
+          </TouchableOpacity>
       {loading ? (
         <ActivityIndicator size="large" color="#007AFF" style={{ marginTop: 40 }} />
       ) : (
@@ -61,6 +66,7 @@ export default function AddPropertyScreen({ navigation, route }: Props) {
           onSubmit={handleSubmit}
           isEdit={isEdit}
         />
+        
       )}
     </SafeAreaView>
   );

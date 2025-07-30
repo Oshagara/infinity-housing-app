@@ -10,15 +10,38 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/RootStack';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useEffect, useState } from 'react';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AgentHome'>;
 
 export default function AgentHomeScreen({ navigation }: Props) {
+  const [name, setName] = useState('');
+  const [userId, setUserId] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const userJson = await AsyncStorage.getItem('agent_info');
+        if (userJson) {
+          const user = JSON.parse(userJson);
+          setName(user.name || 'User');
+          setUserId(user.userId || '');
+          // setProfilePicture(user.profilePicture || user.avatar || '');
+        }
+      } catch (e) {
+        setName('Tenant');
+        // setProfilePicture('');
+      }
+    })();
+  }, []);
+  
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content}>
         <View style={styles.header}>
-          <Text style={styles.title}>Agent Dashboard</Text>
+          <Text style={styles.mediumTitle}>Hi, Ld. {name}</Text>
+          {/* <Text style={styles.subtitle}>ID:{" "} {userId}</Text> */}
           <Text style={styles.subtitle}>Manage your properties and listings</Text>
         </View>
 
@@ -81,7 +104,7 @@ export default function AgentHomeScreen({ navigation }: Props) {
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.tabItem} 
-          onPress={() => navigation.navigate('Inquiries')}
+          onPress={() => navigation.navigate('Profile')}
         >
           <Ionicons name="person-circle" size={24} color="#666" />
           <Text style={styles.tabLabel}>Account</Text>
@@ -104,9 +127,17 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   title: {
-    fontSize: 28,
+    fontSize: 20,
     fontWeight: 'bold',
     marginBottom: 8,
+    paddingTop: 20,
+  },
+
+  mediumTitle: {
+    fontSize: 18,
+    fontWeight: '500',
+    marginBottom: 8,
+    paddingTop: 20,
   },
   subtitle: {
     fontSize: 16,

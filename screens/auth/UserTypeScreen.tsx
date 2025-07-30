@@ -12,7 +12,7 @@ import { RootStackParamList } from '../../types/RootStack';
 type Props = NativeStackScreenProps<RootStackParamList, 'UserType'>;
 
 export default function UserTypeScreen({ navigation }: Props) {
-  const handleUserTypeSelect = (userType: 'tenant' | 'agent') => {
+  const handleUserTypeSelect = (userType: 'tenant' | 'landlord') => {
     navigation.navigate('Register', { userType });
   };
 
@@ -27,15 +27,15 @@ export default function UserTypeScreen({ navigation }: Props) {
             onPress={() => handleUserTypeSelect('tenant')}
           >
             <Text style={styles.buttonText}>Tenant</Text>
-            <Text style={styles.buttonSubtext}>Looking for a place to live</Text>
+            <Text style={styles.buttonSubtext}>buy / rent a property</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
             style={styles.button}
-            onPress={() => handleUserTypeSelect('agent')}
+            onPress={() => handleUserTypeSelect('landlord')}
           >
-            <Text style={styles.buttonText}>Agent</Text>
-            <Text style={styles.buttonSubtext}>Managing properties</Text>
+            <Text style={styles.buttonText}>Landlord</Text>
+            <Text style={styles.buttonSubtext}>advertise your property</Text>
           </TouchableOpacity>
         </View>
       </View>

@@ -196,7 +196,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         {!isEditing ? (
           <>
             <Text style={styles.name}>{user.name}</Text>
-            {user.email && <Text style={styles.email}>{user.email}</Text>}
+            {user.email && <Text style={styles.email}>{user.userId}</Text>}
             <Button
               mode="contained"
               style={styles.editButton}

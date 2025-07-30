@@ -134,7 +134,7 @@ const handleLogin = async () => {
     } else {
       // Single role — Agent or Tenant
       const role = response.availableRoles[0];
-      const isAgent = role === 'agent';
+      const isAgent = role === 'landlord';
       const data = isAgent ? response.agentData : response.tenantData;
 
       const token = data.access_token;
@@ -142,7 +142,9 @@ const handleLogin = async () => {
 
       await AsyncStorage.setItem('access_token', token);
       await AsyncStorage.setItem('agent_info', JSON.stringify(user));
-
+      await AsyncStorage.setItem('role', role);
+      await AsyncStorage.setItem('email', form.email.trim().toLowerCase());
+      await AsyncStorage.setItem('name', user.name); // Store name if available
       console.log(`✅ Stored ${role} token:`, token);
       console.log(`✅ Stored ${role} info:`, user);
 
@@ -223,10 +225,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
+    color: '#111111ff',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#111111ff',
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -237,9 +240,11 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 16,
     marginBottom: 16,
+    color: '#111111ff',
   },
   button: {
     backgroundColor: '#007AFF',
+    color: '#ffffffff',
     padding: 16,
     borderRadius: 8,
     alignItems: 'center',

@@ -4,6 +4,8 @@ import AppNavigator from './navigation/AppNavigator';
 import ErrorBoundary from './components/errorBoundary';
 import { useEffect, useRef } from 'react';
 import { BackHandler, ToastAndroid, Platform } from 'react-native';
+import Toast from 'react-native-toast-message';
+import { View, Text } from 'react-native';
 
 const theme = {
   ...DefaultTheme,
@@ -45,6 +47,17 @@ export default function App() {
     <PaperProvider theme={theme}>
       <ErrorBoundary>
         <AppNavigator />
+        <Toast
+          config={{
+            success: (internalState) => (
+              <View style={{ padding: 15, backgroundColor: 'green', borderRadius: 8 }}>
+                <Text style={{ color: 'white', fontWeight: 'bold' }}>{internalState.text1}</Text>
+                <Text style={{ color: 'white' }}>{internalState.text2}</Text>
+              </View>
+            ),
+          }}
+        />
+
       </ErrorBoundary>
     </PaperProvider>
   );
