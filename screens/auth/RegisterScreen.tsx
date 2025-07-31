@@ -221,6 +221,7 @@ export default function RegisterScreen({ route, navigation }: Props) {
         <TextInput
           style={[styles.input, error ? styles.inputError : null]}
           placeholder={currentField.placeholder}
+          placeholderTextColor="#9a9a9aff"
           value={formData[currentField.field as keyof RegistrationData]}
           onChangeText={(text) => {
             setFormData({ ...formData, [currentField.field]: text });
@@ -299,7 +300,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 8,
     padding: 16,
-    fontSize: 16,
+    fontSize: 18,
     marginBottom: 24,
   },
   skipButton: {

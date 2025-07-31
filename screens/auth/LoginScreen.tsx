@@ -14,6 +14,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/RootStack';
 import { login } from '../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Spinner from 'react-native-loading-spinner-overlay';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -172,6 +173,7 @@ const handleLogin = async () => {
         <TextInput
           style={styles.input}
           placeholder="Email"
+          placeholderTextColor="#9a9a9aff"
           keyboardType="email-address"
           autoCapitalize="none"
           value={form.email}
@@ -180,6 +182,7 @@ const handleLogin = async () => {
         <TextInput
           style={styles.input}
           placeholder="Password"
+          placeholderTextColor="#9a9a9aff"
           secureTextEntry
           value={form.password}
           onChangeText={(v) => handleChange('password', v)}
@@ -191,7 +194,12 @@ const handleLogin = async () => {
           disabled={isLoading}
         >
           {isLoading ? (
-            <ActivityIndicator color="#fff" />
+            <Spinner
+  visible={isLoading}
+  textContent={'Logging in...'}
+  textStyle={{ color: '#fff' }}
+  overlayColor="rgba(0,0,0,0.5)"
+/>
           ) : (
             <Text style={styles.buttonText}>Login</Text>
           )}
@@ -225,11 +233,11 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
-    color: '#111111ff',
+    color: '#292929ff',
   },
   subtitle: {
     fontSize: 16,
-    color: '#111111ff',
+    color: '#424242ff',
     textAlign: 'center',
     marginBottom: 40,
   },
@@ -238,9 +246,9 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRadius: 8,
     padding: 16,
-    fontSize: 16,
+    fontSize: 18,
     marginBottom: 16,
-    color: '#111111ff',
+    color: '#161616ff',
   },
   button: {
     backgroundColor: '#007AFF',
