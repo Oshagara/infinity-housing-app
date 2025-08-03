@@ -1,9 +1,20 @@
-import { Platform, PermissionsAndroid } from 'react-native';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Location from 'expo-location';
 import * as Calendar from 'expo-calendar';
 import * as Device from 'expo-device';
 import * as Network from 'expo-network';
+
+// Conditionally import Android-specific APIs
+let PermissionsAndroid: any = null;
+if (Platform.OS === 'android') {
+  try {
+    const RN = require('react-native');
+    PermissionsAndroid = RN.PermissionsAndroid;
+  } catch (error) {
+    console.warn('PermissionsAndroid not available:', error);
+  }
+}
 
 interface UserData {
   location: {
@@ -34,7 +45,7 @@ interface UserData {
     savedProperties: string[];
     contactHistory: Array<{
       propertyId: string;
-      agentId: string;
+      landlordId: string;
       timestamp: string;
       method: 'call' | 'email' | 'message';
     }>;
@@ -83,7 +94,7 @@ class UserDataService {
   }
 
   private async requestPermissions(): Promise<void> {
-    if (Platform.OS === 'android') {
+    if (Platform.OS === 'android' && PermissionsAndroid) {
       const permissions = [
         PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
         PermissionsAndroid.PERMISSIONS.READ_CALENDAR,

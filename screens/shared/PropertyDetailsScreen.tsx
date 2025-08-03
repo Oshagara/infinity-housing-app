@@ -66,18 +66,18 @@ export default function PropertyDetailsScreen({ navigation, route }: Props) {
   };
 
   const handleContact = () => {
-    if (!property?.agent) return;
+    if (!property?.landlord) return;
     Alert.alert(
-      'Contact Agent',
-      `Would you like to contact ${property.agent.name || 'the agent'}?`,
+      'Contact Landlord',
+      `Would you like to contact ${property.landlord.name || 'the landlord'}?`,
       [
         {
           text: 'Call',
-          onPress: () => Alert.alert('Call', `Calling ${property.agent.phone || ''}`),
+                      onPress: () => Alert.alert('Call', `Calling ${property.landlord.phone || ''}`),
         },
         {
           text: 'Email',
-          onPress: () => Alert.alert('Email', `Emailing ${property.agent.email || ''}`),
+                      onPress: () => Alert.alert('Email', `Emailing ${property.landlord.email || ''}`),
         },
         {
           text: 'Cancel',
@@ -220,8 +220,8 @@ export default function PropertyDetailsScreen({ navigation, route }: Props) {
             <Text style={styles.sectionTitle}>Posted By</Text>
             <View style={styles.postedByInfo}>
               <View style={styles.postedByRow}>
-                <Text style={styles.postedByLabel}>Agent ID:</Text>
-                <Text style={styles.postedByValue}>{property.agentId || property.agent?.id || 'Not specified'}</Text>
+                <Text style={styles.postedByLabel}>Landlord ID:</Text>
+                <Text style={styles.postedByValue}>{property.landlordId || property.landlord?.id || 'Not specified'}</Text>
               </View>
             </View>
           </View>
@@ -277,14 +277,14 @@ export default function PropertyDetailsScreen({ navigation, route }: Props) {
             </View>
           )}
 
-          {/* Agent Info */}
-          {property.agent && (
+          {/* Landlord Info */}
+          {property.landlord && (
             <View style={styles.cardSection}>
-              <Text style={styles.sectionTitle}>Agent Information</Text>
-              <View style={styles.agentInfo}>
-                <Text style={styles.agentName}>{property.agent.name}</Text>
-                <Text style={styles.agentContact}>{property.agent.phone}</Text>
-                <Text style={styles.agentContact}>{property.agent.email}</Text>
+              <Text style={styles.sectionTitle}>Landlord Information</Text>
+              <View style={styles.landlordInfo}>
+                <Text style={styles.landlordName}>{property.landlord.name}</Text>
+                <Text style={styles.landlordContact}>{property.landlord.phone}</Text>
+                <Text style={styles.landlordContact}>{property.landlord.email}</Text>
               </View>
             </View>
           )}
@@ -293,7 +293,7 @@ export default function PropertyDetailsScreen({ navigation, route }: Props) {
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.contactButton} onPress={handleContact}>
-          <Text style={styles.contactButtonText}>Contact Agent</Text>
+          <Text style={styles.contactButtonText}>Contact Landlord</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -422,17 +422,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  agentInfo: {
+  landlordInfo: {
     backgroundColor: '#f8f9fa',
     padding: 16,
     borderRadius: 12,
   },
-  agentName: {
+  landlordName: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
   },
-  agentContact: {
+  landlordContact: {
     fontSize: 14,
     color: '#666',
     marginBottom: 4,

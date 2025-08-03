@@ -1,12 +1,22 @@
 import React, { useState, useRef, useContext, useEffect } from 'react';
 import {
-    View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ActivityIndicator,
+    View, Text, TextInput, StyleSheet, Alert, TouchableOpacity, ActivityIndicator, Platform,
 } from 'react-native';
 import { AuthContext } from './contexts/AuthContext';
 import axios from 'axios';
-import { Vibration} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Toast from 'react-native-toast-message';
+
+// Conditionally import Vibration API
+let Vibration: any = null;
+if (Platform.OS !== 'web') {
+  try {
+    const RN = require('react-native');
+    Vibration = RN.Vibration;
+  } catch (error) {
+    console.warn('Vibration API not available:', error);
+  }
+}
 
 const OTP_LENGTH = 6;
 const RESEND_LIMIT = 5;
@@ -43,12 +53,16 @@ export default function VerifyEmailScreen({ navigation }: any) {
         const fullCode = codeString || code.join('');
         const email = await AsyncStorage.getItem('email');
         if (fullCode.length !== OTP_LENGTH) {
-            Vibration.vibrate(100);
+            if (Vibration) {
+                Vibration.vibrate(100);
+            }
             return Alert.alert('Incomplete', 'Enter all 6 digits');
         }
 
         if (!email) {
-            Vibration.vibrate(100);
+            if (Vibration) {
+                Vibration.vibrate(100);
+            }
             return Toast.show({
                 type: 'error',
                 text1: 'Missing Email',
@@ -69,16 +83,30 @@ export default function VerifyEmailScreen({ navigation }: any) {
             Toast.show({
                 type: 'success',
                 text1: 'Success',
-                text2: 'Email Successfully verified 🎉',
+                text2: 'Email Successfully verified',
             });
 
             const role = res.data.user.role;
+            if (role) {
+                await AsyncStorage.setItem('role', role);
+            }
+            if (token) {
+                await AsyncStorage.setItem('access_token', token);
+            }
+            if (email) {
+                await AsyncStorage.setItem('email', email);
+            }
+            if (res.data.user) {
+                await AsyncStorage.setItem('user_info', JSON.stringify(res.data.user));
+            }
             navigation.reset({
                 index: 0,
-                routes: [{ name: role === 'landlord' ? 'AgentHome' : 'TenantHome' }],
+                routes: [{ name: role === 'landlord' ? 'LandlordHome' : 'TenantHome' }],
             });
         } catch (err: any) {
-            Vibration.vibrate(100);
+            if (Vibration) {
+                Vibration.vibrate(100);
+            }
             Toast.show({
                 type: 'error',
                 text1: 'Verification Failed',
@@ -115,7 +143,9 @@ export default function VerifyEmailScreen({ navigation }: any) {
                 text2: 'A new verification code was sent to your email.',
             });
         } catch (err: any) {
-            Vibration.vibrate(100);
+            if (Vibration) {
+                Vibration.vibrate(100);
+            }
             Toast.show({
                 type: 'error',
                 text1: 'Resend Failed',

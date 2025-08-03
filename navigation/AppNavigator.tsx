@@ -3,13 +3,13 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import RegisterScreen from '../screens/auth/RegisterScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
-import AgentHomeScreen from '../screens/agent/AgentHomeScreen';
-import MyListingsScreen from '../screens/agent/MyListingsScreen';
+import LandlordHomeScreen from '../screens/landlord/LandlordHomeScreen';
+import LandlordListingsScreen from '../screens/landlord/LandlordListingsScreen';
 import InquiriesScreen from '../screens/shared/InquiriesScreen';
 import { RootStackParamList } from '../types/RootStack';
 import PreviewScreen from '../screens/auth/PreviewScreen';
 import UserTypeScreen from '../screens/auth/UserTypeScreen';
-import AddPropertyScreen from '../screens/agent/AddPropertyScreen';
+import AddPropertyScreen from '../screens/landlord/AddPropertyScreen';
 import TenantHomeScreen from '../screens/tenant/TenantHomeScreen';
 import HomeScreen from '../screens/tenant/HomeScreen';
 import PropertyDetails from '../screens/shared/PropertyDetailsScreen';
@@ -42,10 +42,10 @@ export default function AppNavigator() {
         <Stack.Screen name="UserType" component={UserTypeScreen} />
         <Stack.Screen name="Register" component={RegisterScreen} />
         <Stack.Screen name="Login" component={LoginScreen} />
-        <Stack.Screen name="AgentHome" component={AgentHomeScreen} />
+        <Stack.Screen name="LandlordHome" component={LandlordHomeScreen} />
         <Stack.Screen name="TenantHome" component={TenantHomeScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
-        <Stack.Screen name="MyListings" component={MyListingsScreen} />
+        <Stack.Screen name="LandlordListings" component={LandlordListingsScreen} />
         <Stack.Screen name="Inquiries" component={InquiriesScreen} />
         <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ title: 'Add Property' }} />
         <Stack.Screen name="PropertyDetails" component={PropertyDetails} />

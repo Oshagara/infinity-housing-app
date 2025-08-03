@@ -183,7 +183,9 @@ export default function RegisterScreen({ route, navigation }: Props) {
         role: userType,
       });
 
-      await AsyncStorage.setItem('email', sanitizedEmail);
+      if (sanitizedEmail) {
+        await AsyncStorage.setItem('email', sanitizedEmail);
+      }
 
       navigation.navigate('VerifyEmail', { email: sanitizedEmail});
 
@@ -212,7 +214,7 @@ export default function RegisterScreen({ route, navigation }: Props) {
         ))}
       </View>
       <Text style={styles.subtitle}>
-        {userType === 'tenant' ? 'Tenant Registration' : 'Agent Registration'}
+        {userType === 'tenant' ? 'Tenant Registration' : 'Landlord Registration'}
       </Text>
 
       <View style={styles.content}>
@@ -288,6 +290,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 8,
+    color: '#161616ff',
   },
   subtitle: {
     fontSize: 16,
@@ -302,6 +305,7 @@ const styles = StyleSheet.create({
     padding: 16,
     fontSize: 18,
     marginBottom: 24,
+    color: '#161616ff',
   },
   skipButton: {
     marginTop: 20,

@@ -2,9 +2,9 @@ export type RootStackParamList = {
   Login: undefined;
   Register: { userType: 'tenant' | 'landlord' };
   UserType: undefined;
-  AgentHome: undefined;
+  LandlordHome: undefined;
   TenantHome: undefined;
-  MyListings: undefined;
+  LandlordListings: undefined;
   Inquiries: undefined;
   Chatbot: undefined;
   SavedItems: undefined;

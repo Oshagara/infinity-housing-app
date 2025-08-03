@@ -1,4 +1,4 @@
-// screens/AddPropertyScreen.tsx
+// screens/landlord/AddPropertyScreen.tsx
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, SafeAreaView } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';

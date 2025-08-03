@@ -1,4 +1,4 @@
-// screens/MyListingsScreen.tsx
+// screens/LandlordListingsScreen.tsx
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert, SafeAreaView
@@ -6,12 +6,12 @@ import {
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/RootStack';
 import { Property } from '../../types/Property';
-import { fetchAgentListings } from '../../services/PropertyService';
+import { fetchLandlordListings } from '../../services/PropertyService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'MyListings'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'LandlordListings'>;
 
-export default function MyListingsScreen({ navigation }: Props) {
+export default function LandlordListingsScreen({ navigation }: Props) {
   const [listings, setListings] = useState<Property[]>([]);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -21,8 +21,9 @@ export default function MyListingsScreen({ navigation }: Props) {
 
   const checkAuthAndLoadListings = async () => {
     try {
-      const userData = await AsyncStorage.getItem('user');
+      const userData = await AsyncStorage.getItem('landlord_info');
       if (!userData) {
+        console.log('❌ No landlord_info found in AsyncStorage');
         Alert.alert(
           'Authentication Required',
           'Please login to view your listings',
@@ -35,9 +36,12 @@ export default function MyListingsScreen({ navigation }: Props) {
         );
         return;
       }
+      
+      const user = JSON.parse(userData);
+      console.log('✅ Loaded landlord info for listings:', user);
       await loadListings();
     } catch (error) {
-      console.error('Auth check failed:', error);
+      console.error('❌ Auth check failed:', error);
       Alert.alert('Error', 'Failed to verify authentication');
     }
   };
@@ -45,7 +49,7 @@ export default function MyListingsScreen({ navigation }: Props) {
   const loadListings = async () => {
     try {
       setIsLoading(true);
-      const data = await fetchAgentListings();
+      const data = await fetchLandlordListings();
       setListings(data);
     } catch (err: any) {
       Alert.alert('Error', err.message);

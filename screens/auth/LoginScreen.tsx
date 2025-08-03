@@ -14,7 +14,7 @@ import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/RootStack';
 import { login } from '../../services/authService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Spinner from 'react-native-loading-spinner-overlay';
+import Toast from 'react-native-toast-message';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
@@ -24,7 +24,7 @@ export default function LoginScreen({ navigation }: Props) {
 
   const handleChange = (field: string, value: string) => setForm({ ...form, [field]: value });
 
- /**  const handleLogin = async () => {
+  const handleLogin = async () => {
     if (!form.email.trim() || !form.password.trim()) {
       Alert.alert('Error', 'Please fill in all fields');
       return;
@@ -32,137 +32,151 @@ export default function LoginScreen({ navigation }: Props) {
 
     try {
       setIsLoading(true);
+
+      // Clear all existing data before storing new user data
+      await clearAllUserData();
+
       const response = await login({
         email: form.email,
         password: form.password,
       });
 
-      if (response.availableRoles.length > 1) {
-        // Show role selection prompt
-        Alert.alert(
-          'Select Role',
-          'You have accounts as both Agent and Tenant. Please select which role you want to use:',
-          [
-            {
-              text: 'Agent',
-              onPress: () => {
-                // Use agent data
-                console.log('Login successful as Agent:', response.agentData);
-                navigation.navigate('AgentHome');
-              },
-            },
-            {
-              text: 'Tenant',
-              onPress: () => {
-                // Use tenant data
-                console.log('Login successful as Tenant:', response.tenantData);
-                navigation.navigate('TenantHome');
-              },
-            },
-          ]
-        );
-      } else {
-        // Single role available, proceed with login
-        const role = response.availableRoles[0];
-        const data = role === 'agent' ? response.agentData : response.tenantData;
-        console.log(`Login successful as ${role}:`, data);
-        navigation.navigate(role === 'agent' ? 'AgentHome' : 'TenantHome');
+      // Debug full response
+      console.log('🔍 FULL LOGIN RESPONSE:', response);
+
+      // Extract user data and role from response
+      const user = response.user;
+      const role = response.role; // This is now the verified role from database
+      const token = response.token;
+      const isLandlord = role === 'landlord';
+
+      console.log('🔍 Login Response Summary:');
+      console.log('🔍 User ID:', user?.id || user?.userId || user?._id);
+      console.log('🔍 User Email:', user?.email);
+      console.log('🔍 User Name:', user?.name || user?.fullName);
+      console.log('🔍 Verified Role:', role);
+      console.log('🔍 Is Landlord:', isLandlord);
+      console.log('🔍 Token Available:', !!token);
+
+      if (!user || !token) {
+        throw new Error('No valid user data or token found');
+      }
+
+      // Store all necessary data with fallbacks
+      try {
+        // Store token
+        if (token) {
+          await AsyncStorage.setItem('access_token', token);
+          console.log('✅ Stored access_token');
+        }
+
+        // Store user info
+        if (user) {
+          await AsyncStorage.setItem('user_info', JSON.stringify(user));
+          console.log('✅ Stored user_info');
+        }
+
+        // Store role
+        await AsyncStorage.setItem('role', role);
+        console.log('✅ Stored role:', role);
+
+        // Store email
+        await AsyncStorage.setItem('email', form.email.trim().toLowerCase());
+        console.log('✅ Stored email');
+
+        // Store name (with fallback)
+        const userName = user?.name || user?.fullName || 'User';
+        await AsyncStorage.setItem('name', userName);
+        console.log('✅ Stored name:', userName);
+
+        // Store user ID (with fallback)
+        const userId = user?.id || user?.userId || user?._id || '';
+        if (userId) {
+          await AsyncStorage.setItem('user_id', userId);
+          console.log('✅ Stored user_id:', userId);
+        }
+
+        // Store role-specific info
+        if (role === 'landlord') {
+          await AsyncStorage.setItem('landlord_info', JSON.stringify(user));
+          console.log('✅ Stored landlord_info');
+        } else if (role === 'tenant') {
+          await AsyncStorage.setItem('tenant_info', JSON.stringify(user));
+          console.log('✅ Stored tenant_info');
+        }
+
+        // Store additional user data
+        if (user?.phone) {
+          await AsyncStorage.setItem('phone', user.phone);
+          console.log('✅ Stored phone');
+        }
+
+        if (user?.email) {
+          await AsyncStorage.setItem('user_email', user.email);
+          console.log('✅ Stored user_email');
+        }
+
+        console.log(`✅ Successfully stored all data for ${role}`);
+        console.log(`✅ User data:`, user);
+        console.log(`✅ Token:`, token);
+
+        // Navigate based on verified role
+        console.log('🔍 About to navigate...');
+        console.log('🔍 role value:', role);
+
+        if (isLandlord) {
+          console.log('🚀 Navigating to LandlordHome');
+          navigation.navigate('LandlordHome');
+        } else {
+          console.log('🚀 Navigating to TenantHome');
+          navigation.navigate('TenantHome');
+        }
+
+      } catch (storageError) {
+        console.error('❌ Error storing data:', storageError);
+        Alert.alert('Storage Error', 'Failed to save login data');
       }
     } catch (error) {
-      Alert.alert(
-        'Login Failed',
-        error instanceof Error ? error.message : 'Please check your credentials and try again'
-      );
+      // console.error('❌ Login error:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Login Failed',
+        text2: error instanceof Error ? error.message : 'Please check your credentials and try again',
+      });
     } finally {
       setIsLoading(false);
     }
-  }; **/
+  };
 
+  const clearAllUserData = async () => {
+    try {
+      console.log('🧹 Clearing all existing user data...');
 
-const handleLogin = async () => {
-  if (!form.email.trim() || !form.password.trim()) {
-    Alert.alert('Error', 'Please fill in all fields');
-    return;
-  }
+      // Clear all authentication and user data
+      const keysToRemove = [
+        'user_info',
+        'user',
+        'access_token',
+        'role',
+        'email',
+        'name',
+        'user_id',
+        'phone',
+        'user_email',
+        'landlord_info',
+        'tenant_info',
+        'saved_properties', // Also clear saved properties
+      ];
 
-  try {
-    setIsLoading(true);
-    const response = await login({
-      email: form.email,
-      password: form.password,
-    });
+      for (const key of keysToRemove) {
+        await AsyncStorage.removeItem(key);
+      }
 
-    // Debug full response
-    console.log('🔍 FULL LOGIN RESPONSE:', response);
-
-    if (response.availableRoles.length > 1) {
-      Alert.alert(
-        'Select Role',
-        'You have accounts as both Agent and Tenant. Please select which role you want to use:',
-        [
-          {
-            text: 'Agent',
-            onPress: async () => {
-              const token = response.agentData.access_token;
-              const agent = response.agentData.agent;
-
-              await AsyncStorage.setItem('access_token', token);
-              await AsyncStorage.setItem('agent_info', JSON.stringify(agent));
-
-              console.log('✅ Stored agent token:', token);
-              console.log('✅ Stored agent info:', agent);
-
-              navigation.navigate('AgentHome');
-            },
-          },
-          {
-            text: 'Tenant',
-            onPress: async () => {
-              const token = response.tenantData.access_token;
-              const tenant = response.tenantData.agent; // adjust if different key
-
-              await AsyncStorage.setItem('access_token', token);
-              await AsyncStorage.setItem('agent_info', JSON.stringify(tenant)); // still use same key if structure matches
-
-              console.log('✅ Stored tenant token:', token);
-              console.log('✅ Stored tenant info:', tenant);
-
-              navigation.navigate('TenantHome');
-            },
-          },
-        ]
-      );
-    } else {
-      // Single role — Agent or Tenant
-      const role = response.availableRoles[0];
-      const isAgent = role === 'landlord';
-      const data = isAgent ? response.agentData : response.tenantData;
-
-      const token = data.access_token;
-      const user = data.agent;
-
-      await AsyncStorage.setItem('access_token', token);
-      await AsyncStorage.setItem('agent_info', JSON.stringify(user));
-      await AsyncStorage.setItem('role', role);
-      await AsyncStorage.setItem('email', form.email.trim().toLowerCase());
-      await AsyncStorage.setItem('name', user.name); // Store name if available
-      console.log(`✅ Stored ${role} token:`, token);
-      console.log(`✅ Stored ${role} info:`, user);
-
-      navigation.navigate(isAgent ? 'AgentHome' : 'TenantHome');
+      console.log('✅ All user data cleared successfully');
+    } catch (error) {
+      console.error('❌ Error clearing user data:', error);
     }
-  } catch (error) {
-    Alert.alert(
-      'Login Failed',
-      error instanceof Error ? error.message : 'Please check your credentials and try again'
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-
+  };
 
   return (
     <SafeAreaView style={styles.container}>
@@ -194,12 +208,10 @@ const handleLogin = async () => {
           disabled={isLoading}
         >
           {isLoading ? (
-            <Spinner
-  visible={isLoading}
-  textContent={'Logging in...'}
-  textStyle={{ color: '#fff' }}
-  overlayColor="rgba(0,0,0,0.5)"
-/>
+            <ActivityIndicator
+              color="#fff"
+              size="large"
+            />
           ) : (
             <Text style={styles.buttonText}>Login</Text>
           )}

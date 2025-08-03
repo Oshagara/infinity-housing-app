@@ -7,7 +7,7 @@ export interface RegisterData {
   email: string;
   phone: string;
   password: string;
-  role: 'agent' | 'tenant';
+  role: 'landlord' | 'tenant';
 }
 
 export interface LoginData {
@@ -25,8 +25,8 @@ export const register = async (data: RegisterData): Promise<boolean> => {
   }
 };
 
-export const login = async (data: LoginData, isAgent = true): Promise<any | null> => {
-  const endpoint = isAgent ? '/auth/login' : '/tenants/login';
+export const login = async (data: LoginData, isLandlord = true): Promise<any | null> => {
+  const endpoint = isLandlord ? '/auth/login' : '/tenants/login';
   try {
     const res = await axios.post(`${BASE_URL}${endpoint}`, data);
     return res.data;

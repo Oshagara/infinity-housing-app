@@ -199,7 +199,7 @@ export default function InquiriesScreen({ navigation }: Props) {
       <View style={styles.tabBar}>
         <TouchableOpacity 
           style={styles.tabItem} 
-          onPress={() => navigation.navigate('AgentHome')}
+          onPress={() => navigation.navigate('LandlordHome')}
         >
           <Ionicons name="home" size={24} color="#666" />
           <Text style={styles.tabLabel}>Home</Text>

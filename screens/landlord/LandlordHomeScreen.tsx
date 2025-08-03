@@ -13,25 +13,81 @@ import { Ionicons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect, useState } from 'react';
 
-type Props = NativeStackScreenProps<RootStackParamList, 'AgentHome'>;
+type Props = NativeStackScreenProps<RootStackParamList, 'LandlordHome'>;
 
-export default function AgentHomeScreen({ navigation }: Props) {
+export default function LandlordHomeScreen({ navigation }: Props) {
   const [name, setName] = useState('');
   const [userId, setUserId] = useState('');
 
   useEffect(() => {
     (async () => {
       try {
-        const userJson = await AsyncStorage.getItem('agent_info');
-        if (userJson) {
-          const user = JSON.parse(userJson);
-          setName(user.name || 'User');
-          setUserId(user.userId || '');
-          // setProfilePicture(user.profilePicture || user.avatar || '');
+        console.log('🔍 Loading landlord user data...');
+        
+        let userData = null;
+        let userName = 'Landlord';
+        let userId = '';
+        
+        // Try to get user data from multiple sources
+        const role = await AsyncStorage.getItem('role');
+        console.log('🔍 User role:', role);
+        
+        // Try role-specific data first
+        if (role === 'landlord') {
+          const landlordJson = await AsyncStorage.getItem('landlord_info');
+          if (landlordJson) {
+            userData = JSON.parse(landlordJson);
+            console.log('🔍 Found landlord_info data');
+          }
+        } else if (role === 'tenant') {
+          const tenantJson = await AsyncStorage.getItem('tenant_info');
+          if (tenantJson) {
+            userData = JSON.parse(tenantJson);
+            console.log('🔍 Found tenant_info data');
+          }
         }
+        
+        // Fallback to user_info
+        if (!userData) {
+          const userInfoJson = await AsyncStorage.getItem('user_info');
+          if (userInfoJson) {
+            userData = JSON.parse(userInfoJson);
+            console.log('🔍 Found user_info data');
+          }
+        }
+        
+        // Fallback to individual fields
+        if (!userData) {
+          const name = await AsyncStorage.getItem('name');
+          const email = await AsyncStorage.getItem('email');
+          const userIdFromStorage = await AsyncStorage.getItem('user_id');
+          
+          if (name || email || userIdFromStorage) {
+            userData = {
+              name: name || 'Landlord',
+              email: email || '',
+              id: userIdFromStorage || '',
+            };
+            console.log('🔍 Created user data from individual fields');
+          }
+        }
+        
+        // Set user data
+        if (userData) {
+          userName = userData.name || userData.fullName || userData.email || 'Landlord';
+          userId = userData.userId || userData.id || userData._id || '';
+          console.log('✅ Landlord user data loaded successfully:', userName);
+        } else {
+          console.log('⚠️ No landlord user data found, using defaults');
+        }
+        
+        setName(userName);
+        setUserId(userId);
+        
       } catch (e) {
-        setName('Tenant');
-        // setProfilePicture('');
+        console.error('❌ Error loading landlord user data:', e);
+        setName('Landlord');
+        setUserId('');
       }
     })();
   }, []);
@@ -41,7 +97,6 @@ export default function AgentHomeScreen({ navigation }: Props) {
       <ScrollView style={styles.content}>
         <View style={styles.header}>
           <Text style={styles.mediumTitle}>Hi, Ld. {name}</Text>
-          {/* <Text style={styles.subtitle}>ID:{" "} {userId}</Text> */}
           <Text style={styles.subtitle}>Manage your properties and listings</Text>
         </View>
 
@@ -73,7 +128,7 @@ export default function AgentHomeScreen({ navigation }: Props) {
       <View style={styles.tabBar}>
         <TouchableOpacity 
           style={styles.tabItem} 
-          onPress={() => navigation.navigate('AgentHome')}
+          onPress={() => navigation.navigate('LandlordHome')}
         >
           <Ionicons name="home" size={24} color="#007AFF" />
           <Text style={[styles.tabLabel, styles.activeTab]}>Home</Text>
@@ -81,7 +136,7 @@ export default function AgentHomeScreen({ navigation }: Props) {
 
         <TouchableOpacity 
           style={styles.tabItem} 
-          onPress={() => navigation.navigate('MyListings')}
+          onPress={() => navigation.navigate('LandlordListings')}
         >
           <Ionicons name="list" size={24} color="#666" />
           <Text style={styles.tabLabel}>Listings</Text>

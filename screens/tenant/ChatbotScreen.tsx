@@ -1,15 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
+  Text,
   StyleSheet,
   FlatList,
+  TextInput,
+  TouchableOpacity,
   KeyboardAvoidingView,
   Platform,
-  ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
-import { Text, TextInput, IconButton, Card, Button, Chip } from 'react-native-paper';
+import { IconButton, Card, Chip } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/RootStack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Chatbot'>;
@@ -19,125 +24,186 @@ interface Message {
   text: string;
   isUser: boolean;
   timestamp: Date;
-  type?: 'text' | 'options' | 'property';
+  type?: 'text' | 'options' | 'property' | 'quick_reply';
+  options?: string[];
+}
+
+interface Property {
+  id: string;
+  title: string;
+  price: string;
+  location: string;
+  bedrooms: number;
+  bathrooms: number;
+  image?: string;
 }
 
 const ChatbotScreen: React.FC<Props> = ({ navigation }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m your Infinity Housing assistant. How can I help you today?',
-      isUser: false,
-      timestamp: new Date(),
-    },
-  ]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isTyping, setIsTyping] = useState(false);
+  const [userName, setUserName] = useState('');
   const flatListRef = useRef<FlatList>(null);
 
-  const quickOptions = [
-    'View Properties',
-    'Schedule Viewing',
-    'Price Information',
-    'Location Details',
-    'Agent Contact',
-    'Payment Plans',
-  ];
-
   useEffect(() => {
-    // Auto-scroll to bottom when new messages arrive
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flatListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages]);
-
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim()) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      text: text.trim(),
-      isUser: true,
-      timestamp: new Date(),
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputText('');
-    setIsTyping(true);
-
-    // Simulate bot response
+    loadUserData();
+    // Send welcome message
     setTimeout(() => {
-      const botResponse = generateBotResponse(text.trim());
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: botResponse.text,
-        isUser: false,
-        timestamp: new Date(),
-        type: botResponse.type,
-      };
+      addBotMessage("Hello! 👋 I'm your Infinity Housing Assistant. I can help you with:\n\n🏠 Finding properties\n💰 Price information\n📍 Location details\n📞 Contact landlords\n❓ General questions\n\nHow can I assist you today?", [
+        "Find Properties",
+        "Price Range",
+        "Contact Landlord",
+        "Help & Support"
+      ]);
+    }, 500);
+  }, []);
 
-      setMessages(prev => [...prev, botMessage]);
+  const loadUserData = async () => {
+    try {
+      const role = await AsyncStorage.getItem('role');
+      const userInfo = await AsyncStorage.getItem('user_info');
+      if (userInfo) {
+        const user = JSON.parse(userInfo);
+        setUserName(user.name || user.fullName || 'User');
+      }
+    } catch (error) {
+      console.log('Error loading user data:', error);
+    }
+  };
+
+  const addMessage = (text: string, isUser: boolean, options?: string[]) => {
+    const newMessage: Message = {
+      id: Date.now().toString(),
+      text,
+      isUser,
+      timestamp: new Date(),
+      type: options ? 'quick_reply' : 'text',
+      options,
+    };
+    setMessages(prev => [...prev, newMessage]);
+  };
+
+  const addBotMessage = (text: string, options?: string[]) => {
+    setIsTyping(true);
+    setTimeout(() => {
+      addMessage(text, false, options);
       setIsTyping(false);
     }, 1000);
   };
 
-  const generateBotResponse = (userInput: string): { text: string; type?: 'text' | 'options' | 'property' } => {
-    const input = userInput.toLowerCase();
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim()) return;
 
-    if (input.includes('hello') || input.includes('hi') || input.includes('hey')) {
-      return {
-        text: 'Hi there! I can help you with property inquiries, scheduling viewings, or answering questions about our listings. What would you like to know?',
-        type: 'options',
-      };
-    }
+    const userMessage = text.trim();
+    addMessage(userMessage, true);
+    setInputText('');
 
-    if (input.includes('property') || input.includes('view') || input.includes('listing')) {
-      return {
-        text: 'Great! I can help you browse properties. Would you like to see available listings or do you have specific requirements?',
-        type: 'options',
-      };
-    }
+    // Simulate typing
+    setIsTyping(true);
 
-    if (input.includes('price') || input.includes('cost') || input.includes('rent')) {
-      return {
-        text: 'I can provide pricing information for our properties. What type of property are you interested in (apartment, house, commercial) and what\'s your budget range?',
-      };
-    }
-
-    if (input.includes('schedule') || input.includes('viewing') || input.includes('visit')) {
-      return {
-        text: 'I\'d be happy to help you schedule a property viewing! Please let me know which property you\'re interested in and your preferred date/time.',
-      };
-    }
-
-    if (input.includes('agent') || input.includes('contact') || input.includes('speak')) {
-      return {
-        text: 'I can connect you with our agents. Would you like to speak with a specific agent or should I assign one based on your requirements?',
-      };
-    }
-
-    if (input.includes('location') || input.includes('area') || input.includes('neighborhood')) {
-      return {
-        text: 'I can provide information about different neighborhoods and areas. What type of location are you looking for (downtown, suburbs, quiet area, etc.)?',
-      };
-    }
-
-    if (input.includes('payment') || input.includes('finance') || input.includes('plan')) {
-      return {
-        text: 'We offer various payment plans and financing options. Would you like to know about our installment plans, mortgage options, or rental payment terms?',
-      };
-    }
-
-    return {
-      text: 'I\'m here to help! You can ask me about properties, pricing, scheduling viewings, or connecting with agents. What would you like to know?',
-      type: 'options',
-    };
+    // Generate bot response
+    setTimeout(() => {
+      const response = generateBotResponse(userMessage.toLowerCase());
+      addBotMessage(response.text, response.options);
+    }, 1500);
   };
 
-  const handleQuickOption = (option: string) => {
-    handleSendMessage(option);
+  const handleQuickReply = (option: string) => {
+    addMessage(option, true);
+    setInputText('');
+
+    setTimeout(() => {
+      const response = generateBotResponse(option.toLowerCase());
+      addBotMessage(response.text, response.options);
+    }, 1000);
+  };
+
+  const generateBotResponse = (userInput: string): { text: string; options?: string[] } => {
+    // Property search related
+    if (userInput.includes('find') || userInput.includes('search') || userInput.includes('property') || userInput.includes('house')) {
+      return {
+        text: "I can help you find properties! 🏠\n\nWhat are you looking for?\n\n• Location preferences\n• Budget range\n• Number of bedrooms\n• Property type",
+        options: ["2 Bedroom", "3 Bedroom", "Lagos", "Abuja", "Under ₦500k", "₦500k - ₦1M"]
+      };
+    }
+
+    // Price related
+    if (userInput.includes('price') || userInput.includes('cost') || userInput.includes('budget') || userInput.includes('₦')) {
+      return {
+        text: "💰 Our properties range from ₦200,000 to ₦5,000,000 per year.\n\nPopular price ranges:\n• ₦200k - ₦500k: Studio/1BR\n• ₦500k - ₦1M: 2-3BR apartments\n• ₦1M - ₦2M: 3-4BR houses\n• ₦2M+: Luxury properties\n\nWhat's your budget range?",
+        options: ["Under ₦500k", "₦500k - ₦1M", "₦1M - ₦2M", "Above ₦2M"]
+      };
+    }
+
+    // Location related
+    if (userInput.includes('lagos') || userInput.includes('abuja') || userInput.includes('location') || userInput.includes('area')) {
+      return {
+        text: "📍 We have properties in major cities:\n\n🏙️ **Lagos**:\n• Victoria Island\n• Lekki\n• Ikeja\n• Surulere\n\n🏛️ **Abuja**:\n• Wuse\n• Maitama\n• Gwarinpa\n• Asokoro\n\nWhich area interests you?",
+        options: ["Victoria Island", "Lekki", "Ikeja", "Wuse", "Maitama"]
+      };
+    }
+
+    // Contact landlord
+    if (userInput.includes('contact') || userInput.includes('landlord') || userInput.includes('call') || userInput.includes('phone')) {
+      return {
+        text: "📞 To contact a landlord:\n\n1. Go to the property details page\n2. Click 'Contact Landlord' button\n3. Choose your preferred method:\n   • Direct call\n   • WhatsApp\n   • Email\n   • In-app message\n\nWould you like me to show you how to find a specific property?",
+        options: ["Show Properties", "How to Contact", "Back to Search"]
+      };
+    }
+
+    // Help and support
+    if (userInput.includes('help') || userInput.includes('support') || userInput.includes('how') || userInput.includes('guide')) {
+      return {
+        text: "🤝 Here's how I can help you:\n\n🔍 **Search Properties**:\n• Browse by location\n• Filter by price\n• Search by features\n\n📱 **App Features**:\n• Save favorite properties\n• Contact landlords\n• Schedule viewings\n• Get notifications\n\n❓ **Need more help?**",
+        options: ["Search Guide", "App Features", "Contact Support"]
+      };
+    }
+
+    // Bedroom preferences
+    if (userInput.includes('bedroom') || userInput.includes('room')) {
+      return {
+        text: "🛏️ We have properties with:\n\n• Studio apartments\n• 1 bedroom\n• 2 bedrooms\n• 3 bedrooms\n• 4+ bedrooms\n\nWhat size are you looking for?",
+        options: ["Studio", "1 Bedroom", "2 Bedrooms", "3 Bedrooms", "4+ Bedrooms"]
+      };
+    }
+
+    // Property types
+    if (userInput.includes('apartment') || userInput.includes('house') || userInput.includes('duplex') || userInput.includes('flat')) {
+      return {
+        text: "🏘️ Available property types:\n\n🏢 **Apartments**:\n• Studio apartments\n• 1-4 bedroom flats\n• Penthouse units\n\n🏠 **Houses**:\n• Detached houses\n• Semi-detached\n• Townhouses\n• Duplexes\n\nWhich type interests you?",
+        options: ["Apartments", "Houses", "Studio", "Penthouse"]
+      };
+    }
+
+    // Amenities
+    if (userInput.includes('amenity') || userInput.includes('facility') || userInput.includes('parking') || userInput.includes('security')) {
+      return {
+        text: "🏊‍♂️ Common amenities include:\n\n🛡️ **Security**:\n• 24/7 security\n• CCTV cameras\n• Gated community\n\n🚗 **Parking**:\n• Private parking\n• Street parking\n• Garage\n\n🏊‍♂️ **Recreation**:\n• Swimming pool\n• Gym\n• Playground\n\nWhat amenities are important to you?",
+        options: ["Security", "Parking", "Pool/Gym", "All Amenities"]
+      };
+    }
+
+    // Viewing appointments
+    if (userInput.includes('view') || userInput.includes('visit') || userInput.includes('appointment') || userInput.includes('schedule')) {
+      return {
+        text: "📅 To schedule a property viewing:\n\n1. Select a property\n2. Click 'Schedule Viewing'\n3. Choose your preferred date/time\n4. Landlord will confirm\n\nAvailable time slots:\n• Weekdays: 9AM - 6PM\n• Weekends: 10AM - 4PM\n\nWould you like to browse available properties?",
+        options: ["Browse Properties", "Schedule Viewing", "Viewing Guide"]
+      };
+    }
+
+    // Payment and rent
+    if (userInput.includes('payment') || userInput.includes('rent') || userInput.includes('deposit') || userInput.includes('money')) {
+      return {
+        text: "💳 Payment options:\n\n💰 **Rent Payment**:\n• Monthly payments\n• Quarterly payments\n• Annual payments\n\n💵 **Deposits**:\n• Usually 1-2 months rent\n• Refundable security deposit\n\n💳 **Payment Methods**:\n• Bank transfer\n• Cash\n• Mobile money\n\nNeed help with payment terms?",
+        options: ["Payment Terms", "Deposit Info", "Payment Methods"]
+      };
+    }
+
+    // Default response
+    return {
+      text: "I'm here to help with your housing needs! 🏠\n\nYou can ask me about:\n• Finding properties\n• Price ranges\n• Locations\n• Contacting landlords\n• Scheduling viewings\n• Payment options\n\nWhat would you like to know?",
+      options: ["Find Properties", "Price Range", "Contact Landlord", "Help & Support"]
+    };
   };
 
   const renderMessage = ({ item }: { item: Message }) => (
@@ -146,25 +212,19 @@ const ChatbotScreen: React.FC<Props> = ({ navigation }) => {
         <Text style={[styles.messageText, item.isUser ? styles.userText : styles.botText]}>
           {item.text}
         </Text>
-        <Text style={styles.timestamp}>
-          {item.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </Text>
       </View>
       
-      {item.type === 'options' && !item.isUser && (
+      {item.options && (
         <View style={styles.optionsContainer}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {quickOptions.map((option, index) => (
-              <Chip
-                key={index}
-                style={styles.optionChip}
-                textStyle={styles.optionChipText}
-                onPress={() => handleQuickOption(option)}
-              >
-                {option}
-              </Chip>
-            ))}
-          </ScrollView>
+          {item.options.map((option, index) => (
+            <TouchableOpacity
+              key={index}
+              style={styles.optionButton}
+              onPress={() => handleQuickReply(option)}
+            >
+              <Text style={styles.optionText}>{option}</Text>
+            </TouchableOpacity>
+          ))}
         </View>
       )}
     </View>
@@ -173,10 +233,9 @@ const ChatbotScreen: React.FC<Props> = ({ navigation }) => {
   const renderTypingIndicator = () => (
     <View style={[styles.messageContainer, styles.botMessage]}>
       <View style={[styles.messageBubble, styles.botBubble]}>
-        <View style={styles.typingIndicator}>
-          <View style={styles.typingDot} />
-          <View style={styles.typingDot} />
-          <View style={styles.typingDot} />
+        <View style={styles.typingContainer}>
+          <ActivityIndicator size="small" color="#007AFF" />
+          <Text style={styles.typingText}>Assistant is typing...</Text>
         </View>
       </View>
     </View>
@@ -188,17 +247,15 @@ const ChatbotScreen: React.FC<Props> = ({ navigation }) => {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <View style={styles.header}>
-        <IconButton
-          icon="arrow-left"
-          size={24}
-          onPress={() => navigation.goBack()}
-        />
+        <TouchableOpacity onPress={() => navigation.goBack()}>
+          <Ionicons name="arrow-back" size={24} color="#333" />
+        </TouchableOpacity>
         <View style={styles.headerInfo}>
           <Text style={styles.headerTitle}>Infinity Housing Assistant</Text>
           <Text style={styles.headerSubtitle}>Online</Text>
         </View>
         <IconButton
-          icon="more-vert"
+          icon="dots-vertical"
           size={24}
           onPress={() => {}}
         />
@@ -213,6 +270,7 @@ const ChatbotScreen: React.FC<Props> = ({ navigation }) => {
         contentContainerStyle={styles.messagesContent}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={isTyping ? renderTypingIndicator : null}
+        onContentSizeChange={() => flatListRef.current?.scrollToEnd({ animated: true })}
       />
 
       <View style={styles.inputContainer}>
@@ -225,13 +283,17 @@ const ChatbotScreen: React.FC<Props> = ({ navigation }) => {
           maxLength={500}
           onSubmitEditing={() => handleSendMessage(inputText)}
         />
-        <IconButton
-          icon="send"
-          size={24}
-          disabled={!inputText.trim()}
+        <TouchableOpacity
+          style={[styles.sendButton, !inputText.trim() && styles.sendButtonDisabled]}
           onPress={() => handleSendMessage(inputText)}
-          style={styles.sendButton}
-        />
+          disabled={!inputText.trim()}
+        >
+          <Ionicons 
+            name="send" 
+            size={20} 
+            color={inputText.trim() ? "#fff" : "#ccc"} 
+          />
+        </TouchableOpacity>
       </View>
     </KeyboardAvoidingView>
   );
@@ -240,7 +302,8 @@ const ChatbotScreen: React.FC<Props> = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#ffffffff',
+    paddingBottom: 50,
   },
   header: {
     flexDirection: 'row',
@@ -250,7 +313,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#ebebebff',
   },
   headerInfo: {
     flex: 1,
@@ -300,7 +363,7 @@ const styles = StyleSheet.create({
   },
   messageText: {
     fontSize: 16,
-    lineHeight: 20,
+    lineHeight: 22,
   },
   userText: {
     color: '#fff',
@@ -308,34 +371,33 @@ const styles = StyleSheet.create({
   botText: {
     color: '#333',
   },
-  timestamp: {
-    fontSize: 12,
-    color: '#999',
-    marginTop: 4,
-    alignSelf: 'flex-end',
-  },
   optionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     marginTop: 8,
+    gap: 8,
   },
-  optionChip: {
-    marginRight: 8,
-    backgroundColor: '#f0f0f0',
+  optionButton: {
+    backgroundColor: '#fdfdfdff',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#abb1f9ff',
   },
-  optionChipText: {
+  optionText: {
     fontSize: 14,
     color: '#333',
   },
-  typingIndicator: {
+  typingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
-  typingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#999',
-    marginHorizontal: 2,
-    opacity: 0.6,
+  typingText: {
+    fontSize: 14,
+    color: '#666',
+    fontStyle: 'italic',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -347,16 +409,25 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    borderWidth: 1,
+    borderColor: '#ddd',
     borderRadius: 20,
     paddingHorizontal: 16,
-    paddingVertical: 8,
-    marginRight: 8,
+    paddingVertical: 10,
     maxHeight: 100,
+    fontSize: 16,
   },
   sendButton: {
     backgroundColor: '#007AFF',
+    width: 40,
+    height: 40,
     borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 8,
+  },
+  sendButtonDisabled: {
+    backgroundColor: '#f0f0f0',
   },
 });
 

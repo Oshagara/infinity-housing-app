@@ -4,13 +4,13 @@
 // Authentication Screens
 export * from './auth';
 
-// Agent-specific Screens
-export * from './agent';
+// Landlord-specific Screens
+export * from './landlord';
 
 // Tenant-specific Screens
 export * from './tenant';
 
-// Shared Screens (used by both agents and tenants)
+// Shared Screens (used by both landlords and tenants)
 export * from './shared';
 
 // Screen Organization Summary:
@@ -22,11 +22,10 @@ export * from './shared';
 // │   ├── UserTypeScreen
 // │   └── PreviewScreen
 // │
-// ├── 📁 agent/          # Agent/landlord specific screens
-// │   ├── AgentHomeScreen
-// │   ├── AddPropertyScreen
-// │   ├── MyListingsScreen
-// │   └── AgentAccountScreen
+// ├── 📁 landlord/       # Landlord/property owner specific screens
+// │   ├── LandlordHomeScreen
+// │   ├── LandlordListingsScreen
+// │   └── AddPropertyScreen
 // │
 // ├── 📁 tenant/         # Tenant/property seeker specific screens
 // │   ├── TenantHomeScreen

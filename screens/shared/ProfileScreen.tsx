@@ -6,6 +6,7 @@ import { RootStackParamList } from '../../types/RootStack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { updateProfile } from '../../services/authService';
 import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Profile'>;
 
@@ -29,18 +30,83 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   const loadUserData = async () => {
     try {
-      const userJson = await AsyncStorage.getItem('agent_info');
-      if (userJson) {
-        const userData = JSON.parse(userJson);
+      // First try to get the role to determine which storage key to use
+      const role = await AsyncStorage.getItem('role');
+      console.log('🔍 ProfileScreen - User role:', role);
+      
+      let userData = null;
+      
+      // Try to get user data based on role
+      if (role === 'landlord') {
+        const landlordJson = await AsyncStorage.getItem('landlord_info');
+        if (landlordJson) {
+          userData = JSON.parse(landlordJson);
+          console.log('🔍 ProfileScreen - Found landlord data');
+        }
+      } else if (role === 'tenant') {
+        const tenantJson = await AsyncStorage.getItem('tenant_info');
+        if (tenantJson) {
+          userData = JSON.parse(tenantJson);
+          console.log('🔍 ProfileScreen - Found tenant data');
+        }
+      }
+      
+      // Fallback to user_info if role-specific data not found
+      if (!userData) {
+        const userInfoJson = await AsyncStorage.getItem('user_info');
+        if (userInfoJson) {
+          userData = JSON.parse(userInfoJson);
+          console.log('🔍 ProfileScreen - Found user_info data');
+        }
+      }
+      
+      // Final fallback - try both landlord and tenant info
+      if (!userData) {
+        const landlordJson = await AsyncStorage.getItem('landlord_info');
+        const tenantJson = await AsyncStorage.getItem('tenant_info');
+        
+        if (landlordJson) {
+          userData = JSON.parse(landlordJson);
+          console.log('🔍 ProfileScreen - Found landlord data (fallback)');
+        } else if (tenantJson) {
+          userData = JSON.parse(tenantJson);
+          console.log('🔍 ProfileScreen - Found tenant data (fallback)');
+        }
+      }
+      
+      // Final fallback - try individual fields
+      if (!userData) {
+        const name = await AsyncStorage.getItem('name');
+        const email = await AsyncStorage.getItem('email');
+        const phone = await AsyncStorage.getItem('phone');
+        const userId = await AsyncStorage.getItem('user_id');
+        
+        if (name || email || phone || userId) {
+          userData = {
+            name: name || 'User',
+            email: email || '',
+            phone: phone || '',
+            id: userId || '',
+          };
+          console.log('🔍 ProfileScreen - Created user data from individual fields');
+        }
+      }
+      
+      if (userData) {
         setUser(userData);
         setFormData({
-          name: userData.name || '',
+          name: userData.name || userData.fullName || '',
           email: userData.email || '',
           phone: userData.phone || '',
           company: userData.company || '',
         });
+        console.log('✅ ProfileScreen - User data loaded successfully');
+      } else {
+        console.log('❌ ProfileScreen - No user data found');
+        setUser(null);
       }
     } catch (e) {
+      console.error('❌ ProfileScreen - Error loading user data:', e);
       setUser(null);
     } finally {
       setLoading(false);
@@ -92,18 +158,31 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       });
 
       // Update local storage with new data
-      const userData = await AsyncStorage.getItem('agent_info');
-      if (userData) {
-        const updatedUser = { 
-          ...JSON.parse(userData), 
-          name: formData.name.trim(),
-          email: formData.email.trim(),
-          phone: formData.phone.trim(),
-          company: formData.company.trim(),
-        };
-        await AsyncStorage.setItem('agent_info', JSON.stringify(updatedUser));
-        setUser(updatedUser);
+      const role = await AsyncStorage.getItem('role');
+      console.log('🔍 ProfileScreen - Updating profile for role:', role);
+      
+      const updatedUser = { 
+        ...user, 
+        name: formData.name.trim(),
+        email: formData.email.trim(),
+        phone: formData.phone.trim(),
+        company: formData.company.trim(),
+      };
+      
+      // Update role-specific storage
+      if (role === 'landlord') {
+        await AsyncStorage.setItem('landlord_info', JSON.stringify(updatedUser));
+        console.log('✅ ProfileScreen - Updated landlord_info');
+      } else if (role === 'tenant') {
+        await AsyncStorage.setItem('tenant_info', JSON.stringify(updatedUser));
+        console.log('✅ ProfileScreen - Updated tenant_info');
       }
+      
+      // Also update user_info as a general fallback
+      await AsyncStorage.setItem('user_info', JSON.stringify(updatedUser));
+      console.log('✅ ProfileScreen - Updated user_info');
+      
+      setUser(updatedUser);
 
       Alert.alert('Success', 'Profile updated successfully');
       setIsEditing(false);
@@ -124,7 +203,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
     setIsEditing(false);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
@@ -133,9 +212,47 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         { 
           text: 'Logout', 
           style: 'destructive',
-          onPress: () => {
-            AsyncStorage.clear();
-            navigation.replace('Login');
+          onPress: async () => {
+            try {
+              console.log('🚪 Logging out and clearing all data...');
+              
+              // Clear all authentication and user data
+              const keysToRemove = [
+                'user_info',
+                'user',
+                'access_token',
+                'role',
+                'email',
+                'name',
+                'user_id',
+                'phone',
+                'user_email',
+                'landlord_info',
+                'tenant_info',
+                'saved_properties', // Also clear saved properties
+              ];
+
+              for (const key of keysToRemove) {
+                await AsyncStorage.removeItem(key);
+              }
+
+              console.log('✅ All data cleared successfully');
+              
+              Toast.show({
+                type: 'success',
+                text1: 'Logged out successfully',
+                text2: 'All data has been cleared',
+              });
+              
+              navigation.replace('Login');
+            } catch (error) {
+              console.error('❌ Error during logout:', error);
+              Toast.show({
+                type: 'error',
+                text1: 'Logout Error',
+                text2: 'Please try again',
+              });
+            }
           }
         }
       ]
@@ -151,9 +268,47 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
         { 
           text: 'Delete', 
           style: 'destructive',
-          onPress: () => {
-            AsyncStorage.clear();
-            navigation.replace('Login');
+          onPress: async () => {
+            try {
+              console.log('🗑️ Deleting account and clearing all data...');
+              
+              // Clear all authentication and user data
+              const keysToRemove = [
+                'user_info',
+                'user',
+                'access_token',
+                'role',
+                'email',
+                'name',
+                'user_id',
+                'phone',
+                'user_email',
+                'landlord_info',
+                'tenant_info',
+                'saved_properties',
+              ];
+
+              for (const key of keysToRemove) {
+                await AsyncStorage.removeItem(key);
+              }
+
+              console.log('✅ All data cleared successfully');
+              
+              Toast.show({
+                type: 'success',
+                text1: 'Account deleted',
+                text2: 'All data has been cleared',
+              });
+              
+              navigation.replace('Login');
+            } catch (error) {
+              console.error('❌ Error during account deletion:', error);
+              Toast.show({
+                type: 'error',
+                text1: 'Deletion Error',
+                text2: 'Please try again',
+              });
+            }
           }
         }
       ]

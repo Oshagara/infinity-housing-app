@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, FlatList, ActivityIndicator, TouchableOpacity, Image } from 'react-native';
 import { Text, Card, Button, IconButton } from 'react-native-paper';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../types/RootStack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Ionicons } from '@expo/vector-icons';
+import axios from 'axios';
+import Toast from 'react-native-toast-message';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'SavedItems'>;
 
 const SavedItemsScreen: React.FC<Props> = ({ navigation }) => {
   const [savedProperties, setSavedProperties] = useState<any[]>([]);
+  const [savedPropertyIds, setSavedPropertyIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,24 +21,76 @@ const SavedItemsScreen: React.FC<Props> = ({ navigation }) => {
 
   const loadSavedProperties = async () => {
     try {
+      setLoading(true);
+      // Load saved property IDs
       const savedData = await AsyncStorage.getItem('saved_properties');
       if (savedData) {
-        setSavedProperties(JSON.parse(savedData));
+        const savedIds = JSON.parse(savedData);
+        setSavedPropertyIds(savedIds);
+        
+        // Fetch full property data for saved IDs
+        if (savedIds.length > 0) {
+          const allProperties = await fetchAllProperties();
+          const savedPropertiesData = allProperties.filter(prop => 
+            savedIds.includes(prop._id || prop.id)
+          );
+          setSavedProperties(savedPropertiesData);
+        }
       }
     } catch (error) {
       console.error('Error loading saved properties:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to load saved properties',
+      });
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchAllProperties = async () => {
+    try {
+      // Add timeout to prevent hanging
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout')), 8000)
+      );
+      
+      const fetchPromise = axios.get('https://infinity-housing.onrender.com/property');
+      const response = await Promise.race([fetchPromise, timeoutPromise]);
+      
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching properties:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Network Error',
+        text2: 'Failed to load properties. Please check your connection.',
+      });
+      return [];
+    }
+  };
+
   const removeSavedProperty = async (propertyId: string) => {
     try {
-      const updatedProperties = savedProperties.filter(prop => prop._id !== propertyId);
-      setSavedProperties(updatedProperties);
-      await AsyncStorage.setItem('saved_properties', JSON.stringify(updatedProperties));
+      const updatedIds = savedPropertyIds.filter(id => id !== propertyId);
+      setSavedPropertyIds(updatedIds);
+      setSavedProperties(prev => prev.filter(prop => (prop._id || prop.id) !== propertyId));
+      
+      await AsyncStorage.setItem('saved_properties', JSON.stringify(updatedIds));
+      
+      Toast.show({
+        type: 'success',
+        text1: 'Removed from saved',
+        text2: 'Property removed from your saved items',
+      });
     } catch (error) {
       console.error('Error removing saved property:', error);
+      Toast.show({
+        type: 'error',
+        text1: 'Error',
+        text2: 'Failed to remove property',
+      });
     }
   };
 
@@ -60,11 +115,17 @@ const SavedItemsScreen: React.FC<Props> = ({ navigation }) => {
 
   const renderPropertyCard = ({ item }: { item: any }) => {
     const coverUrl = getCoverImage(item.images);
+    const isSaved = savedPropertyIds.includes(item._id || item.id);
+    
     return (
-      <Card style={styles.card} elevation={2}>
+      <TouchableOpacity 
+        style={styles.card} 
+        onPress={() => navigation.navigate('PropertyDetails', { propertyId: item._id || item.id })}
+        activeOpacity={0.7}
+      >
         <View style={{ position: 'relative' }}>
           {item.images && item.images.length > 0 ? (
-            <Card.Cover source={{ uri: coverUrl }} style={styles.cardImage} />
+            <Image source={{ uri: coverUrl }} style={styles.cardImage} />
           ) : null}
           {/* Listing Type Tag on Image */}
           <View style={styles.listingTypeTagContainer}>
@@ -72,20 +133,26 @@ const SavedItemsScreen: React.FC<Props> = ({ navigation }) => {
               {item.listingType}
             </Text>
           </View>
-          {/* Remove Button */}
-          <IconButton
-            icon="close"
-            size={20}
-            style={styles.removeButton}
-            onPress={() => removeSavedProperty(item._id)}
-            iconColor="#fff"
-          />
+          {/* Save/Remove Button */}
+          <TouchableOpacity
+            style={styles.saveButton}
+            onPress={(e) => {
+              e.stopPropagation();
+              removeSavedProperty(item._id || item.id);
+            }}
+          >
+            <Ionicons 
+              name="heart" 
+              size={20} 
+              color="#ff4757" 
+            />
+          </TouchableOpacity>
         </View>
-        <Card.Content>
+        <View style={styles.cardContent}>
           <Text style={styles.title}>{item.title || item.propertyType}</Text>
           <Text style={styles.price}>{item.currency || 'NGN'} {item.price?.toLocaleString?.() || item.price}</Text>
           <View style={styles.addressContainer}>
-            <Ionicons name="location-outline" size={12} color="#666" style={styles.locationIcon} />
+            <Ionicons name="location-outline" size={10} color="#666" style={styles.locationIcon} />
             <Text style={styles.address}>{item.address?.street || item.address || item.location || ''}</Text>
           </View>
           <View style={styles.detailsRow}>
@@ -96,18 +163,8 @@ const SavedItemsScreen: React.FC<Props> = ({ navigation }) => {
             <Text style={styles.detail}>{item.area?.value || item.area} {item.area?.unit || item.areaUnit || ''}</Text>
           </View>
           <Text style={styles.furnishing}>{item.furnishing}</Text>
-        </Card.Content>
-        <Card.Actions>
-          <Button 
-            style={styles.cardButton} 
-            compact 
-            labelStyle={styles.cardButtonText} 
-            onPress={() => navigation.navigate('PropertyDetails', { propertyId: item._id || item.id })}
-          >
-            View Details
-          </Button>
-        </Card.Actions>
-      </Card>
+        </View>
+      </TouchableOpacity>
     );
   };
 
@@ -235,12 +292,17 @@ const styles = StyleSheet.create({
   saleTag: {
     backgroundColor: '#34C759',
   },
-  removeButton: {
+  saveButton: {
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 20,
+    padding: 5,
+    zIndex: 1,
+  },
+  cardContent: {
+    padding: 12,
   },
   title: {
     fontSize: 16,
@@ -285,15 +347,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888',
     marginBottom: 8,
-  },
-  cardButton: {
-    backgroundColor: '#007AFF',
-    borderRadius: 8,
-  },
-  cardButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
   },
 });
 

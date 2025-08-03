@@ -1,5 +1,5 @@
 // Shared Screens
-// These screens are used by both agents and tenants
+// These screens are used by both landlords and tenants
 
 export { default as PropertyDetailsScreen } from './PropertyDetailsScreen';
 export { default as ProfileScreen } from './ProfileScreen';

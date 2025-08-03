@@ -4,24 +4,26 @@ import { Property } from '../types/Property';
 
 const API_URL = 'https://infinity-housing.onrender.com';
 
-export const fetchAgentListings = async (): Promise<Property[]> => {
-  const user = await AsyncStorage.getItem('user');
-  const token = await AsyncStorage.getItem('token');
+export const fetchLandlordListings = async (): Promise<Property[]> => {
+  const user = await AsyncStorage.getItem('landlord_info');
+  const token = await AsyncStorage.getItem('access_token');
   if (!user || !token) throw new Error('User not authenticated');
 
-  const { id } = JSON.parse(user);
+  const userData = JSON.parse(user);
+  const userId = userData.userId || userData.id || userData._id;
+  if (!userId) throw new Error('User ID not found');
 
-  const response = await fetch(`${API_URL}/property/${id}`, {
+  const response = await fetch(`${API_URL}/property/landlord/${userId}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
   const data = await response.json();
-  if (!response.ok) throw new Error(data.message || 'Failed to fetch listings');
+  if (!response.ok) throw new Error(data.message || 'Failed to fetch landlord listings');
   return data as Property[];
 };
 
 export const fetchPropertyById = async (id: string): Promise<Property> => {
-  const token = await AsyncStorage.getItem('token');
+  const token = await AsyncStorage.getItem('access_token');
   const response = await fetch(`${API_URL}/property/${id}`, {
     headers: { Authorization: `Bearer ${token}` },
   });
@@ -31,9 +33,9 @@ export const fetchPropertyById = async (id: string): Promise<Property> => {
   return data as Property;
 };
 
-export const createProperty = async (agentId:String, payload: Partial<Property>) => {
-  const token = await AsyncStorage.getItem('token');
-  const response = await fetch(`${API_URL}/property/${agentId}`, {
+export const createProperty = async (landlordId: string, payload: Partial<Property>) => {
+  const token = await AsyncStorage.getItem('access_token');
+  const response = await fetch(`${API_URL}/property/${landlordId}`, {
     method: 'POST',
     headers: {
       Authorization: `Bearer ${token}`,
@@ -48,7 +50,7 @@ export const createProperty = async (agentId:String, payload: Partial<Property>)
 };
 
 export const updateProperty = async (id: string, payload: Partial<Property>) => {
-  const token = await AsyncStorage.getItem('token');
+  const token = await AsyncStorage.getItem('access_token');
   const response = await fetch(`${API_URL}/property/${id}`, {
     method: 'PUT',
     headers: {

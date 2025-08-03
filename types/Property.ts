@@ -90,7 +90,7 @@ export interface Property {
   additionalInfo: AdditionalInfo;
   createdAt: string;
   updatedAt: string;
-  agentId: string;
+  landlordId: string;
   status: 'active' | 'pending' | 'sold' | 'rented';
   views: number;
   inquiries: number;

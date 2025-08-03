@@ -153,11 +153,11 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
   }
 
   const token = await AsyncStorage.getItem('access_token');
-  const agentJson = await AsyncStorage.getItem('agent_info');
-  const agent = agentJson ? JSON.parse(agentJson) : null;
+  const landlordJson = await AsyncStorage.getItem('landlord_info');
+  const landlord = landlordJson ? JSON.parse(landlordJson) : null;
 
-  if (!token || !agent) {
-    Alert.alert('Auth Error', 'You are not logged in or agent info missing.');
+  if (!token || !landlord) {
+    Alert.alert('Auth Error', 'You are not logged in or landlord info missing.');
     setSubmitting(false);
     return;
   }
@@ -198,10 +198,10 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
     flooring: [values.flooring],
     availability: values.availability,
     listedBy: {
-      name: agent.name,
-      phone: agent.phone || 'N/A',
-      role: 'agent',
-      agency: agent.agency || 'N/A',
+      name: landlord.name,
+      phone: landlord.phone || 'N/A',
+      role: 'landlord',
+      agency: landlord.agency || 'N/A',
     },
     images: values.images.map((file: any) => ({
       uri: file.uri,

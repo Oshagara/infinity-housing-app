@@ -32,7 +32,9 @@ export default function EditProfileScreen({ navigation }: Props) {
       const userData = await AsyncStorage.getItem('user');
       if (userData) {
         const updatedUser = { ...JSON.parse(userData), ...formData };
-        await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        if (updatedUser) {
+          await AsyncStorage.setItem('user', JSON.stringify(updatedUser));
+        }
         Alert.alert('Success', 'Profile updated successfully');
         navigation.goBack();
       }
