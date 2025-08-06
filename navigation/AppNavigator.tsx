@@ -5,6 +5,7 @@ import RegisterScreen from '../screens/auth/RegisterScreen';
 import LoginScreen from '../screens/auth/LoginScreen';
 import LandlordHomeScreen from '../screens/landlord/LandlordHomeScreen';
 import LandlordListingsScreen from '../screens/landlord/LandlordListingsScreen';
+import LandlordChatbotScreen from '../screens/landlord/LandlordChatbotScreen';
 import InquiriesScreen from '../screens/shared/InquiriesScreen';
 import { RootStackParamList } from '../types/RootStack';
 import PreviewScreen from '../screens/auth/PreviewScreen';
@@ -46,6 +47,7 @@ export default function AppNavigator() {
         <Stack.Screen name="TenantHome" component={TenantHomeScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="LandlordListings" component={LandlordListingsScreen} />
+        <Stack.Screen name="LandlordChatbot" component={LandlordChatbotScreen} options={{ title: 'Landlord Assistant' }} />
         <Stack.Screen name="Inquiries" component={InquiriesScreen} />
         <Stack.Screen name="AddProperty" component={AddPropertyScreen} options={{ title: 'Add Property' }} />
         <Stack.Screen name="PropertyDetails" component={PropertyDetails} />

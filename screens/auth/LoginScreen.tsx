@@ -73,12 +73,17 @@ export default function LoginScreen({ navigation }: Props) {
         // Store user info
         if (user) {
           await AsyncStorage.setItem('user_info', JSON.stringify(user));
-          console.log('✅ Stored user_info');
+          console.log('✅ Stored user_info', user);
         }
 
         // Store role
         await AsyncStorage.setItem('role', role);
         console.log('✅ Stored role:', role);
+
+        // Debug: Verify role was stored correctly
+        const storedRole = await AsyncStorage.getItem('role');
+        console.log('🔍 Verification - Stored role:', storedRole);
+        console.log('🔍 Verification - Role matches:', storedRole === role);
 
         // Store email
         await AsyncStorage.setItem('email', form.email.trim().toLowerCase());
@@ -115,6 +120,18 @@ export default function LoginScreen({ navigation }: Props) {
           await AsyncStorage.setItem('user_email', user.email);
           console.log('✅ Stored user_email');
         }
+
+        // Final verification - check all stored data
+        console.log('🔍 Final verification of stored data:');
+        const finalRole = await AsyncStorage.getItem('role');
+        const finalUserInfo = await AsyncStorage.getItem('user_info');
+        const finalLandlordInfo = await AsyncStorage.getItem('landlord_info');
+        const finalTenantInfo = await AsyncStorage.getItem('tenant_info');
+        
+        console.log('🔍 Final role:', finalRole);
+        console.log('🔍 Final user_info exists:', !!finalUserInfo);
+        console.log('🔍 Final landlord_info exists:', !!finalLandlordInfo);
+        console.log('🔍 Final tenant_info exists:', !!finalTenantInfo);
 
         console.log(`✅ Successfully stored all data for ${role}`);
         console.log(`✅ User data:`, user);

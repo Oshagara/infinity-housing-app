@@ -87,6 +87,7 @@ export const login = async (credentials: {
     }
 
     console.log('🔍 Final verified role:', verifiedRole);
+    
 
     return {
       user,

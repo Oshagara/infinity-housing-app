@@ -122,6 +122,13 @@ export default function LandlordHomeScreen({ navigation }: Props) {
           >
             <Text style={styles.actionButtonText}>Add New Property</Text>
           </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, styles.helpButton]}
+            onPress={() => navigation.navigate('LandlordChatbot')}
+          >
+            <Text style={styles.actionButtonText}>Get Help</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
@@ -152,10 +159,10 @@ export default function LandlordHomeScreen({ navigation }: Props) {
 
         <TouchableOpacity 
           style={styles.tabItem} 
-          onPress={() => navigation.navigate('Inquiries')}
+          onPress={() => navigation.navigate('LandlordChatbot')}
         >
-          <Ionicons name="chatbubble" size={24} color="#666" />
-          <Text style={styles.tabLabel}>Chat</Text>
+          <Ionicons name="help-circle" size={24} color="#666" />
+          <Text style={styles.tabLabel}>Help</Text>
         </TouchableOpacity>
         <TouchableOpacity 
           style={styles.tabItem} 
@@ -235,6 +242,12 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  helpButton: {
+    backgroundColor: '#4CAF50', // A different color for the help button
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
   },
   tabBar: {
     flexDirection: 'row',

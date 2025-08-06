@@ -2,4 +2,5 @@
 
 export { default as LandlordHomeScreen } from './LandlordHomeScreen';
 export { default as LandlordListingsScreen } from './LandlordListingsScreen';
-export { default as AddPropertyScreen } from './AddPropertyScreen'; 
+export { default as AddPropertyScreen } from './AddPropertyScreen';
+export { default as LandlordChatbotScreen } from './LandlordChatbotScreen'; 

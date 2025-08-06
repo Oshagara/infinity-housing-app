@@ -10,9 +10,10 @@ import * as Yup from 'yup';
 import axios from 'axios';
 import { TextInputLabelProp } from 'react-native-paper/lib/typescript/components/TextInput/types';
 import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
-import { Dropdown } from "react-native-paper-dropdown";
- import * as FileSystem from 'expo-file-system';
- import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Dropdown } from 'react-native-element-dropdown';
+import * as FileSystem from 'expo-file-system';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Toast from 'react-native-toast-message';
 
 const theme = {
   ...DefaultTheme,
@@ -145,132 +146,138 @@ const PropertyForm2: React.FC<PropertyForm2Props> = ({ initialData, onSubmit, is
   };**/
 
 
-const handleSubmit = async (values: any, { setSubmitting }: any) => {
-  if (!values.images || values.images.length === 0) {
-    Alert.alert('Missing Images', 'Please select at least one image.');
-    setSubmitting(false);
-    return;
-  }
+  const handleSubmit = async (values: any, { setSubmitting }: any) => {
+    if (!values.images || values.images.length === 0) {
+      Alert.alert('Missing Images', 'Please select at least one image.');
+      setSubmitting(false);
+      return;
+    }
 
-  const token = await AsyncStorage.getItem('access_token');
-  const landlordJson = await AsyncStorage.getItem('landlord_info');
-  const landlord = landlordJson ? JSON.parse(landlordJson) : null;
+    const token = await AsyncStorage.getItem('access_token');
+    const userJson = await AsyncStorage.getItem('user_info');
+    const landlord = userJson ? JSON.parse(userJson) : null;
 
-  if (!token || !landlord) {
-    Alert.alert('Auth Error', 'You are not logged in or landlord info missing.');
-    setSubmitting(false);
-    return;
-  }
+    console.log(token);
 
-  // ✅ Build payload including listedBy
-  const payload = {
-    listingType: values.listingType,
-    propertyType: values.propertyType,
-    price: parseFloat(values.price),
-    currency: values.currency,
-    isNegotiable: values.isNegotiable,
-    address: {
-      street: values.street,
-      area: values.area,
-      city: values.city,
-      state: values.state,
-      lga: values.lga,
-      country: values.country,
-      coordinates: {
-        type: 'Point',
-        coordinates: [parseFloat(values.longitude), parseFloat(values.latitude)],
-      },
-    },
-    bedrooms: parseInt(values.bedrooms),
-    bathrooms: parseInt(values.bathrooms),
-    toilets: parseInt(values.toilets),
-    area: {
-      value: parseFloat(values.areaValue),
-      unit: values.areaUnit,
-    },
-    plotSize: {
-      value: parseFloat(values.plotSizeValue),
-      unit: values.plotSizeUnit,
-    },
-    yearBuilt: parseInt(values.yearBuilt),
-    floors: parseInt(values.floors),
-    furnishing: values.furnishing,
-    flooring: [values.flooring],
-    availability: values.availability,
-    listedBy: {
-      name: landlord.name,
-      phone: landlord.phone || 'N/A',
-      role: 'landlord',
-      agency: landlord.agency || 'N/A',
-    },
-    images: values.images.map((file: any) => ({
-      uri: file.uri,
-      name: file.name || 'upload.jpg',
-      type: file.mimeType || 'image/jpeg',
-    })),
-    videos: [],
-    floorPlan: '',
-    features: {
-      interior: [],
-      exterior: [],
-      security: [],
-      amenities: [],
-    },
-    locationAdvantages: [],
-    financialDetails: {
-      maintenanceFee: parseFloat(values.maintenanceFee),
-      agencyFee: values.agencyFee,
-      paymentPlan: [values.paymentPlan],
-    },
-    legalStatus: {
-      ownership: values.ownership,
-      cOfO: values.cOfO,
-      governorConsent: values.governorConsent,
-    },
-    additionalInfo: {
-      petPolicy: values.petPolicy,
-      targetTenant: values.targetTenant,
-      proximityToRoad: values.proximityToRoad,
-    },
-  };
+    if (!token || !landlord) {
+      Alert.alert('Auth Error', 'You are not logged in or user info missing.');
+      setSubmitting(false);
+      return;
+    }
 
-  const formData = new FormData();
-  formData.append('payload', JSON.stringify(payload));
-  values.images.forEach((file: any) => {
-    formData.append('images[]', {
-      uri: file.uri,
-      name: file.name || 'upload.jpg',
-      type: file.mimeType || 'image/jpeg',
-    } as any);
-  });
-
-  try {
-    const response = await axios.post(
-      'https://infinity-housing.onrender.com/property',
-      formData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
+    // ✅ Build payload including listedBy
+    const payload = {
+      listingType: values.listingType,
+      propertyType: values.propertyType,
+      price: parseFloat(values.price),
+      currency: values.currency,
+      isNegotiable: values.isNegotiable,
+      address: {
+        street: values.street,
+        area: values.area,
+        city: values.city,
+        state: values.state,
+        lga: values.lga,
+        country: values.country,
+        coordinates: {
+          type: 'Point',
+          coordinates: [parseFloat(values.longitude), parseFloat(values.latitude)],
         },
-      }
-    );
+      },
+      bedrooms: parseInt(values.bedrooms),
+      bathrooms: parseInt(values.bathrooms),
+      toilets: parseInt(values.toilets),
+      area: {
+        value: parseFloat(values.areaValue),
+        unit: values.areaUnit,
+      },
+      plotSize: {
+        value: parseFloat(values.plotSizeValue),
+        unit: values.plotSizeUnit,
+      },
+      yearBuilt: parseInt(values.yearBuilt),
+      floors: parseInt(values.floors),
+      furnishing: values.furnishing,
+      flooring: [values.flooring],
+      availability: values.availability,
+      listedBy: {
+        name: landlord.name,
+        phone: landlord.phone || 'N/A',
+        role: 'landlord',
+        agency: landlord.agency || 'N/A',
+      },
+      images: values.images.map((file: any) => ({
+        uri: file.uri,
+        name: file.name || 'upload.jpg',
+        type: file.mimeType || 'image/jpeg',
+      })),
+      videos: [],
+      floorPlan: '',
+      features: {
+        interior: [],
+        exterior: [],
+        security: [],
+        amenities: [],
+      },
+      locationAdvantages: [],
+      financialDetails: {
+        maintenanceFee: parseFloat(values.maintenanceFee),
+        agencyFee: values.agencyFee,
+        paymentPlan: [values.paymentPlan],
+      },
+      legalStatus: {
+        ownership: values.ownership,
+        cOfO: values.cOfO,
+        governorConsent: values.governorConsent,
+      },
+      additionalInfo: {
+        petPolicy: values.petPolicy,
+        targetTenant: values.targetTenant,
+        proximityToRoad: values.proximityToRoad,
+      },
+    };
 
-    Alert.alert('Success', 'Property submitted successfully.');
-    console.log('✅ Upload response:', response.data);
-  } catch (error: any) {
-    console.log('❌ Axios error:', error.message);
-    Alert.alert('Error', error.message || 'Submission failed.');
-  } finally {
-    setSubmitting(false);
-  }
-};
+    const formData = new FormData();
+    formData.append('payload', JSON.stringify(payload));
+    values.images.forEach((file: any) => {
+      formData.append('images[]', {
+        uri: file.uri,
+        name: file.name || 'upload.jpg',
+        type: file.mimeType || 'image/jpeg',
+      } as any);
+    });
+
+    try {
+      const response = await axios.post(
+        'https://infinity-housing.onrender.com/property',
+        formData,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+
+      Toast.show({
+        type: 'success',
+        text1: 'Success',
+        text2: 'Property submitted successfully!',
+      });
+      console.log('✅ Upload response:', response.data);
+    } catch (error: any) {
+      console.log('❌ Axios error:', error.message);
+      Alert.alert('Error', error.message || 'Submission failed.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
 
   const renderDropdown = (label: TextInputLabelProp | undefined, value: string | undefined, setFieldValue: (arg0: any, arg1: any) => void, options: any[]) => (
     <Menu
       visible={false}
-      onDismiss={() => {}}
+      onDismiss={() => { }}
       anchor={
         <TextInput
           label={label}
@@ -278,7 +285,7 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
           mode="outlined"
           style={styles.input}
           right={<TextInput.Icon icon="menu-down" />}
-          onFocus={() => {}}
+          onFocus={() => { }}
         />
       }
     >
@@ -300,30 +307,49 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
             <View>
               <List.Accordion title="Basic Info" left={props => <List.Icon {...props} icon="information" />}>
                 <Dropdown
-                  label="Listing Type"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.listingType.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Listing Type"
                   value={values.listingType}
-                  onSelect={(v?: string) => setFieldValue('listingType', v)}
-                  options={dropdownOptions.listingType.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('listingType', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.listingType && errors.listingType)}>{errors.listingType}</HelperText>
+
                 <Dropdown
-                  label="Property Type"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.propertyType.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Property Type"
                   value={values.propertyType}
-                  onSelect={(v?: string) => setFieldValue('propertyType', v)}
-                  options={dropdownOptions.propertyType.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('propertyType', item.value)}
                 />
+
                 <HelperText type="error" visible={!!(touched.propertyType && errors.propertyType)}>{errors.propertyType}</HelperText>
                 <TextInput label="Price" value={values.price} onChangeText={handleChange('price')} keyboardType="numeric" mode="outlined" style={styles.input} />
                 <HelperText type="error" visible={!!(touched.price && errors.price)}>{errors.price}</HelperText>
+
                 <Dropdown
-                  label="Currency"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.currency.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Currency"
                   value={values.currency}
-                  onSelect={(v?: string) => setFieldValue('currency', v)}
-                  options={dropdownOptions.currency.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('currency', item.value)}
                 />
+
                 <HelperText type="error" visible={!!(touched.currency && errors.currency)}>{errors.currency}</HelperText>
                 <View style={styles.switchRow}>
                   <Text>Is Negotiable</Text>
@@ -346,29 +372,50 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
               </List.Accordion>
 
               <List.Accordion title="Property Details" left={props => <List.Icon {...props} icon="home" />}>
+
                 <Dropdown
-                  label="bedrooms"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.bedroom.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Bedrooms"
                   value={values.bedrooms}
-                  onSelect={(v?: string) => setFieldValue('bedrooms', v)}
-                  options={dropdownOptions.bedroom.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('bedrooms', item.value)}
                 />
+
                 <HelperText type="error" visible={!!(touched.bedrooms && errors.bedrooms)}>{errors.bedrooms}</HelperText>
+
                 <Dropdown
-                  label="bathrooms"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.bathroom.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Bathrooms"
                   value={values.bathrooms}
-                  onSelect={(v?: string) => setFieldValue('bathrooms', v)}
-                  options={dropdownOptions.bathroom.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('bathrooms', item.value)}
                 />
+
                 <HelperText type="error" visible={!!(touched.bathrooms && errors.bathrooms)}>{errors.bathrooms}</HelperText>
+
                 <Dropdown
-                  label="toilets"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.toilet.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Toilets"
                   value={values.toilets}
-                  onSelect={(v?: string) => setFieldValue('toilets', v)}
-                  options={dropdownOptions.toilet.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('toilets', item.value)}
                 />
+
                 <HelperText type="error" visible={!!(touched.toilets && errors.toilets)}>{errors.toilets}</HelperText>
                 <TextInput
                   label="areaValue"
@@ -380,11 +427,16 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
                 />
                 <HelperText type="error" visible={!!(touched.areaValue && errors.areaValue)}>{errors.areaValue}</HelperText>
                 <Dropdown
-                  label="Area Unit"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.areaUnit.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Area Unit"
                   value={values.areaUnit}
-                  onSelect={(v?: string) => setFieldValue('areaUnit', v)}
-                  options={dropdownOptions.areaUnit.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('areaUnit', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.areaUnit && errors.areaUnit)}>{errors.areaUnit}</HelperText>
                 <TextInput
@@ -397,86 +449,123 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
                 />
                 <HelperText type="error" visible={!!(touched.plotSizeValue && errors.plotSizeValue)}>{errors.plotSizeValue}</HelperText>
                 <Dropdown
-                  label="Plot Size Unit"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.plotSizeUnit.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Plot Size Unit"
                   value={values.plotSizeUnit}
-                  onSelect={(v?: string) => setFieldValue('plotSizeUnit', v)}
-                  options={dropdownOptions.plotSizeUnit.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('plotSizeUnit', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.plotSizeUnit && errors.plotSizeUnit)}>{errors.plotSizeUnit}</HelperText>
                 <Dropdown
-                  label="yearBuilt"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.yearBuilt.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Year Built"
                   value={values.yearBuilt}
-                  onSelect={(v?: string) => setFieldValue('yearBuilt', v)}
-                  options={dropdownOptions.yearBuilt.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('yearBuilt', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.yearBuilt && errors.yearBuilt)}>{errors.yearBuilt}</HelperText>
                 <Dropdown
-                  label="floors"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.floors.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Floors"
                   value={values.floors}
-                  onSelect={(v?: string) => setFieldValue('floors', v)}
-                  options={dropdownOptions.floors.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('floors', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.floors && errors.floors)}>{errors.floors}</HelperText>
                 <Dropdown
-                  label="Furnishing"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.furnishing.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Furnishing"
                   value={values.furnishing}
-                  onSelect={(v?: string) => setFieldValue('furnishing', v)}
-                  options={dropdownOptions.furnishing.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('furnishing', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.furnishing && errors.furnishing)}>{errors.furnishing}</HelperText>
                 <Dropdown
-                  label="Flooring"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.flooring.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Flooring"
                   value={values.flooring}
-                  onSelect={(v?: string) => setFieldValue('flooring', v)}
-                  options={dropdownOptions.flooring.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('flooring', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.flooring && errors.flooring)}>{errors.flooring}</HelperText>
                 <Dropdown
-                  label="availability"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.availability.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Availability"
                   value={values.availability}
-                  onSelect={(v?: string) => setFieldValue('availability', v)}
-                  options={dropdownOptions.availability.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('availability', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.availability && errors.availability)}>{errors.availability}</HelperText>
               </List.Accordion>
 
               <List.Accordion title="Financial & Legal" left={props => <List.Icon {...props} icon="currency-ngn" />}>
                 <Dropdown
-                  label="maintenanceFee"
-                  mode="outlined"
-                  value={values.maintenanceFee}
-                  onSelect={(v?: string) => setFieldValue('maintenanceFee', v)}
-                  options={dropdownOptions.percentage.map(opt => ({ label: opt, value: opt }))}
-                />
-                <HelperText type="error" visible={!!(touched.maintenanceFee && errors.maintenanceFee)}>{errors.maintenanceFee}</HelperText>
-                <Dropdown
-                  label="agencyFee"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.percentage.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Agency Fee"
                   value={values.agencyFee}
-                  onSelect={(v?: string) => setFieldValue('agencyFee', v)}
-                  options={dropdownOptions.percentage.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('agencyFee', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.agencyFee && errors.agencyFee)}>{errors.agencyFee}</HelperText>
                 <Dropdown
-                  label="Payment Plan"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.paymentPlan.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Payment Plan"
                   value={values.paymentPlan}
-                  onSelect={(v?: string) => setFieldValue('paymentPlan', v)}
-                  options={dropdownOptions.paymentPlan.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('paymentPlan', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.paymentPlan && errors.paymentPlan)}>{errors.paymentPlan}</HelperText>
                 <Dropdown
-                  label="ownership"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.ownership.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Ownership"
                   value={values.ownership}
-                  onSelect={(v?: string) => setFieldValue('ownership', v)}
-                  options={dropdownOptions.ownership.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('ownership', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.ownership && errors.ownership)}>{errors.ownership}</HelperText>
                 <View style={styles.switchRow}>
@@ -493,27 +582,42 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
 
               <List.Accordion title="Additional Info" left={props => <List.Icon {...props} icon="dots-horizontal" />}>
                 <Dropdown
-                  label="petPolicy"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.petPolicy.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Pet Policy"
                   value={values.petPolicy}
-                  onSelect={(v?: string) => setFieldValue('petPolicy', v)}
-                  options={dropdownOptions.petPolicy.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('petPolicy', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.petPolicy && errors.petPolicy)}>{errors.petPolicy}</HelperText>
                 <Dropdown
-                  label="targetTenant"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.targetTenant.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Target Tenant"
                   value={values.targetTenant}
-                  onSelect={(v?: string) => setFieldValue('targetTenant', v)}
-                  options={dropdownOptions.targetTenant.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('targetTenant', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.targetTenant && errors.targetTenant)}>{errors.targetTenant}</HelperText>
                 <Dropdown
-                  label="proximityToRoad"
-                  mode="outlined"
+                  style={styles.dropdown}
+                  placeholderStyle={styles.placeholderStyle}
+                  selectedTextStyle={styles.selectedTextStyle}
+                  data={dropdownOptions.proximityToRoad.map(opt => ({ label: opt, value: opt }))}
+                  maxHeight={300}
+                  labelField="label"
+                  valueField="value"
+                  placeholder="Select Proximity to Road"
                   value={values.proximityToRoad}
-                  onSelect={(v?: string) => setFieldValue('proximityToRoad', v)}
-                  options={dropdownOptions.proximityToRoad.map(opt => ({ label: opt, value: opt }))}
+                  onChange={item => setFieldValue('proximityToRoad', item.value)}
                 />
                 <HelperText type="error" visible={!!(touched.proximityToRoad && errors.proximityToRoad)}>{errors.proximityToRoad}</HelperText>
               </List.Accordion>
@@ -522,7 +626,7 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
                 icon="plus"
                 mode="contained"
                 onPress={() => pickFiles(setFieldValue, values.images)}
-                style={styles.button}
+                style={styles.uploadButton}
               >
                 {values.images && values.images.length > 0 ? 'Files Selected' : 'Pick Files'}
               </Button>
@@ -561,6 +665,9 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
               </Button>
             </View>
           )}
+
+
+
         </Formik>
       </ScrollView>
     </PaperProvider>
@@ -569,26 +676,74 @@ const handleSubmit = async (values: any, { setSubmitting }: any) => {
 
 const styles = StyleSheet.create({
   container: {
-    paddingVertical: 80,
+    paddingBottom: 80,
+    paddingTop: 10,
     paddingHorizontal: 20,
+    backgroundColor: '#ffffffff',
   },
   input: {
     marginBottom: 15,
     backgroundColor: '#fff',
-    borderRadius: 8,
-    borderColor: '#E0E0E0',
+    borderRadius: 1,
   },
   switchRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
+    backgroundColor: '#fff',
   },
   button: {
     marginTop: 10,
     color: '#fff',
     backgroundColor: '#007AFF',
   },
+   uploadButton: {
+    marginTop: 10,
+    color: '#767676ff',
+    borderColor: '#ffffffff',
+    borderWidth: 1,
+    backgroundColor: '#b6b7caff',
+  },
+  dropdownStyle: {
+    marginBottom: 15,
+  },
+  dropdownWrapper: {
+    marginBottom: 2,
+    position: 'relative',
+    zIndex: 1,
+    overflow: 'visible',
+    padding: 0,
+  },
+  dropdown: {
+    height: 50,
+    borderColor: '#cececeff',
+    borderWidth: 0.5,
+    borderRadius: 1,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    backgroundColor: '#fff',
+  },
+  placeholderStyle: {
+    fontSize: 16,
+    color: '#888',
+  },
+  selectedTextStyle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#ffffffff',
+    backgroundColor: '#6e7a9aff',
+    padding: 5,
+  },
 });
+
+const dropdownTheme = {
+  colors: {
+    primary: '#00796B',       // outline + focus color
+    background: '#F8F9FA',    // input background
+    surface: '#F8F9FA',       // menu background
+    onSurface: '#000',        // text color
+  }
+};
 
 export default PropertyForm2;

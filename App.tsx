@@ -3,7 +3,7 @@ import { Provider as PaperProvider, DefaultTheme } from 'react-native-paper';
 import AppNavigator from './navigation/AppNavigator';
 import ErrorBoundary from './components/errorBoundary';
 import { useEffect, useRef } from 'react';
-import { Platform, View, Text, AppState } from 'react-native';
+import { Platform, View, Text, AppState, AppStateStatus } from 'react-native';
 import Toast from 'react-native-toast-message';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -27,9 +27,9 @@ const theme = {
     ...DefaultTheme.colors,
     primary: '#007AFF',
     accent: '#34C759',
-    background: '#fdfdfd',
-    surface: '#fff',
-    text: '#222',
+    background: '#ffffffff',
+    surface: '#ffffff',
+    text: '#262626ff',
   },
 };
 
@@ -71,19 +71,18 @@ export default function App() {
   useEffect(() => {
     const checkForOldData = async () => {
       try {
-        console.log('🔍 Checking for old user data on app start...');
+        console.log('🔍 Checking for user data on app start...');
         
         const accessToken = await AsyncStorage.getItem('access_token');
         const userInfo = await AsyncStorage.getItem('user_info');
         
         if (accessToken || userInfo) {
-          console.log('🚪 Found old user data - clearing on app start');
-          await clearAllUserData();
+          console.log('✅ Found existing user data - user is logged in');
         } else {
-          console.log('✅ No old user data found on app start');
+          console.log('✅ No user data found on app start - user needs to login');
         }
       } catch (error) {
-        console.error('❌ Error checking for old data:', error);
+        console.error('❌ Error checking for user data:', error);
       }
     };
 
@@ -95,16 +94,7 @@ export default function App() {
     const handleAppStateChange = (nextAppState: string) => {
       console.log('📱 App state changed:', appState.current, '→', nextAppState);
       
-      // If app is going to background, clear user data
-      if (
-        appState.current.match(/inactive|active/) && 
-        nextAppState === 'background'
-      ) {
-        console.log('🚪 App going to background - logging out user');
-        clearAllUserData();
-      }
-      
-      // If app is being terminated (going from background to inactive)
+      // Only clear data when app is being terminated, not when going to background
       if (
         appState.current === 'background' && 
         nextAppState === 'inactive'
@@ -113,20 +103,12 @@ export default function App() {
         clearAllUserData();
       }
       
-      // If app is going from active to inactive (iOS specific)
-      if (
-        appState.current === 'active' && 
-        nextAppState === 'inactive'
-      ) {
-        console.log('🚪 App going inactive - logging out user');
-        clearAllUserData();
-      }
-      
-      appState.current = nextAppState;
+      // Ensure nextAppState is of type AppStateStatus
+      appState.current = nextAppState as AppStateStatus;
     };
 
     const subscription = AppState.addEventListener('change', handleAppStateChange);
-    
+
     // Also clear data when component unmounts (app is being closed)
     return () => {
       console.log('🚪 App component unmounting - clearing user data');

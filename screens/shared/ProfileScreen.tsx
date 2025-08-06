@@ -30,9 +30,29 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
 
   const loadUserData = async () => {
     try {
+      console.log('🔍 ProfileScreen - Loading user data...');
+      
+      // Debug: Check all AsyncStorage keys
+      const allKeys = await AsyncStorage.getAllKeys();
+      console.log('🔍 ProfileScreen - All AsyncStorage keys:', allKeys);
+      
       // First try to get the role to determine which storage key to use
       const role = await AsyncStorage.getItem('role');
       console.log('🔍 ProfileScreen - User role:', role);
+      
+      // Debug: Check what's actually stored
+      const userInfo = await AsyncStorage.getItem('user_info');
+      const landlordInfo = await AsyncStorage.getItem('landlord_info');
+      const tenantInfo = await AsyncStorage.getItem('tenant_info');
+      const name = await AsyncStorage.getItem('name');
+      const email = await AsyncStorage.getItem('email');
+      
+      console.log('🔍 ProfileScreen - Debug storage:');
+      console.log('🔍 user_info:', userInfo ? 'exists' : 'null');
+      console.log('🔍 landlord_info:', landlordInfo ? 'exists' : 'null');
+      console.log('🔍 tenant_info:', tenantInfo ? 'exists' : 'null');
+      console.log('🔍 name:', name);
+      console.log('🔍 email:', email);
       
       let userData = null;
       
@@ -93,6 +113,7 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
       }
       
       if (userData) {
+        console.log('✅ ProfileScreen - User data loaded successfully:', userData);
         setUser(userData);
         setFormData({
           name: userData.name || userData.fullName || '',
@@ -100,14 +121,13 @@ const ProfileScreen: React.FC<Props> = ({ navigation }) => {
           phone: userData.phone || '',
           company: userData.company || '',
         });
-        console.log('✅ ProfileScreen - User data loaded successfully');
       } else {
         console.log('❌ ProfileScreen - No user data found');
-        setUser(null);
+        Alert.alert('Error', 'No user data found. Please log in again.');
       }
-    } catch (e) {
-      console.error('❌ ProfileScreen - Error loading user data:', e);
-      setUser(null);
+    } catch (error) {
+      console.error('❌ ProfileScreen - Error loading user data:', error);
+      Alert.alert('Error', 'Failed to load user data');
     } finally {
       setLoading(false);
     }
